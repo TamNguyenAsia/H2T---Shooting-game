@@ -938,7 +938,7 @@ function launch(e, angle, power, w, facing, delay) {
 }
 function fire() {
   const hh = S.cur, sp = S.sp, fly = sp.has('fly'); if (fly) S.weapon = 0;
-  let w = shotW(SHOTS[S.weapon]); S.charging = false; hh.lastPower = Math.round(S.power * 10) / 10; S.walkTo = null;
+  let w = shotW(SHOTS[S.weapon]); S.charging = false; hh.lastPower = Math.round(S.power * 10) / 10; hh.lastAngle = Math.round(hh.angle); S.walkTo = null;
   if (w.ult) hh.energy = 0; if (w.cd) hh.cd = w.cd;
   const extra = fly ? 0 : sp.has('b2') ? 2 : sp.has('b1') ? 1 : 0, vol = !fly && sp.has('x2') ? 2 : 1;
   w = { ...w, mul: fly ? 0 : w.mul * SPLIT[extra] * (vol === 2 ? X2_MUL : 1), fly };
@@ -977,6 +977,7 @@ function applyHit(src, tgt, mul) {
   const crit = Math.random() < src.crit; if (crit) dmg *= 1.6;
   const dodge = !tgt.isBoss && Math.random() < tgt.dodge; if (dodge) dmg *= 0.5;
   dmg = Math.max(1, Math.round(dmg));
+  if (!tgt.isBoss && tgt.lastAngle != null) { tgt.lastAngle = null; floatText(tgt.x, tgt.y - 140, 'Mất góc cũ', '#9fdcff'); } // trúng đạn thì bị xô lệch, mất góc đã lưu
   const ab = Math.min(tgt.shield || 0, dmg); if (ab) tgt.shield -= ab; tgt.hp -= dmg - ab; tgt.hurt = 0.5;
   const foe = src.team !== tgt.team; if (foe) src.stats.dmg += dmg; if (!src.isBoss && foe) src.energy = Math.min(100, src.energy + 5); if (!tgt.isBoss) tgt.energy = Math.min(100, tgt.energy + 8);
   if (tgt.hp <= 0 && !tgt.dead) kill(tgt, src);
@@ -1201,6 +1202,9 @@ function drawAim() {
   const rad = (hh.angle * Math.PI) / 180, px = hh.x + hh.facing * 2, py = hh.y - HIT_Y, dx = hh.facing * Math.cos(rad), dy = -Math.sin(rad);
   c.save(); c.strokeStyle = 'rgba(255,240,200,.8)'; c.setLineDash([7, 7]); c.lineWidth = 2.5; c.beginPath(); c.moveTo(px + dx * 50, py + dy * 50); c.lineTo(px + dx * 130, py + dy * 130); c.stroke(); c.setLineDash([]);
   c.strokeStyle = 'rgba(233,185,79,.55)'; c.beginPath(); if (hh.facing > 0) c.arc(px, py, 44, -rad, 0); else c.arc(px, py, 44, Math.PI, Math.PI + rad); c.stroke();
+  if (hh.lastAngle != null && Math.round(hh.angle) !== hh.lastAngle) { const la = (hh.lastAngle * Math.PI) / 180, ldx = hh.facing * Math.cos(la), ldy = -Math.sin(la);
+    c.strokeStyle = 'rgba(95,208,255,.75)'; c.setLineDash([3, 6]); c.lineWidth = 2; c.beginPath(); c.moveTo(px + ldx * 50, py + ldy * 50); c.lineTo(px + ldx * 120, py + ldy * 120); c.stroke(); c.setLineDash([]);
+    c.font = '700 12px "Be Vietnam Pro",sans-serif'; c.fillStyle = '#9fdcff'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = 'rgba(12,8,22,.8)'; c.strokeText(`cũ ${hh.lastAngle}°`, px + ldx * 136, py + ldy * 136 + 4); c.fillText(`cũ ${hh.lastAngle}°`, px + ldx * 136, py + ldy * 136 + 4); }
   c.font = '800 17px "Baloo 2",sans-serif'; c.fillStyle = '#ffe7a8'; c.textAlign = 'center'; c.lineWidth = 3.5; c.strokeStyle = 'rgba(12,8,22,.8)'; const tx = px + dx * 150, tyy = py + dy * 150 + 6; c.strokeText(Math.round(hh.angle) + '°', tx, tyy); c.fillText(Math.round(hh.angle) + '°', tx, tyy); c.restore();
   if (S.walkTo != null) { const g = groundAt(S.walkTo); if (g < Infinity) { c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 2; c.beginPath(); c.ellipse(S.walkTo, g, 12, 4, 0, 0, 7); c.stroke(); } }
   if (S.buff && S.buff.traj) { const pw = S.charging ? S.power : hh.lastPower ?? 50; const p = launch(hh, hh.angle, pw, shotW(SHOTS[S.weapon]), hh.facing, 0); c.fillStyle = 'rgba(159,220,255,.9)';
@@ -1323,7 +1327,7 @@ function drawMini() {
 
 /* =================== HUD =================== */
 const el = (id) => document.getElementById(id);
-const E = {}; ['powPct', 'stTxt', 'buffs', 'wFill', 'wVal', 'roundTxt', 'timer', 'clock', 'whoName', 'hpFill', 'shFill', 'hpTxt', 'enFill', 'enTxt', 'enMeter', 'angVal', 'needle', 'dialSvg', 'pVal', 'pLast', 'pFill', 'pMark', 'stFill', 'fireBtn', 'hudBot', 'me'].forEach((i) => (E[i] = el(i)));
+const E = {}; ['needleOld', 'powPct', 'stTxt', 'buffs', 'wFill', 'wVal', 'roundTxt', 'timer', 'clock', 'whoName', 'hpFill', 'shFill', 'hpTxt', 'enFill', 'enTxt', 'enMeter', 'angVal', 'needle', 'dialSvg', 'pVal', 'pLast', 'pFill', 'pMark', 'stFill', 'fireBtn', 'hudBot', 'me'].forEach((i) => (E[i] = el(i)));
 function st(e, v) { if (e._v !== v) { e._v = v; e.textContent = v; } }
 function sw(e, v) { if (e._w !== v) { e._w = v; e.style.width = v; } }
 // Ô kỹ năng: 1 Đạn thường, 2 Tam liên, 4 Vật phẩm hỗ trợ; Tuyệt kỹ (3) là nút POW cạnh nút Bắn
@@ -1361,7 +1365,8 @@ function updateHUD() {
   st(E.hpTxt, `${fmt(Math.max(0, hh.hp))} / ${fmt(hh.maxHp)}${hh.shield ? ` · giáp ${fmt(hh.shield)}` : ''}`);
   const nl = S.state === 'aim' ? S.nl : NL_MAX; sw(E.enFill, nl + '%'); st(E.enTxt, `${nl} / ${NL_MAX}`);
   st(E.angVal, Math.round(hh.angle) + '°'); const a = (hh.angle * Math.PI) / 180; E.needle.setAttribute('x2', (40 + 32 * Math.cos(a)).toFixed(1)); E.needle.setAttribute('y2', (42 - 32 * Math.sin(a)).toFixed(1)); E.dialSvg.classList.toggle('flip', hh.facing < 0);
-  st(E.pVal, `Lực ${Math.round(S.power)}`); st(E.pLast, hh.lastPower == null ? 'Lần trước: —' : `Lần trước: ${Math.round(hh.lastPower)}`); sw(E.pFill, S.power + '%');
+  st(E.pVal, `Lực ${Math.round(S.power)}`); st(E.pLast, hh.lastPower == null ? 'Lần trước: —' : `Lần trước: lực ${Math.round(hh.lastPower)} · góc ${hh.lastAngle == null ? '—' : hh.lastAngle + '°'}`);
+  if (hh.lastAngle != null) { const la = (hh.lastAngle * Math.PI) / 180; E.needleOld.style.display = ''; E.needleOld.setAttribute('x2', (40 + 30 * Math.cos(la)).toFixed(1)); E.needleOld.setAttribute('y2', (42 - 30 * Math.sin(la)).toFixed(1)); } else E.needleOld.style.display = 'none'; sw(E.pFill, S.power + '%');
   if (hh.lastPower != null) { E.pMark.hidden = false; E.pMark.style.left = hh.lastPower + '%'; } else E.pMark.hidden = true;
   sw(E.stFill, Math.max(0, (S.stamina / hh.move) * 100) + '%'); st(E.stTxt, String(Math.max(0, Math.round(S.state === 'aim' ? S.stamina : hh.move))));
   const human = humanCan(); E.hudBot.classList.toggle('locked', !human);
@@ -1654,7 +1659,7 @@ const heroIdx = (x) => (x === S.boss ? -2 : S.heroes.indexOf(x));
 function netSnap() {
   return { k: 's', st: S.state, c: S.cur ? heroIdx(S.cur) : -1, w: S.wind, tm: r1(S.timer), pw: r1(S.power), ch: S.charging ? 1 : 0, wp: S.weapon, sm: Math.round(S.stamina), nl: S.nl, sp: [...S.sp],
     bf: S.buff, rd: S.round, sd: S.sd, sk: Math.round(S.shake), fo: S.focus,
-    h: S.heroes.map((x) => [r1(x.x), r1(x.y), Math.round(x.hp), Math.round(x.shield), Math.round(x.energy), r1(x.angle), x.facing, x.dead ? 1 : 0, x.frozen || 0, x.cd, x.supCd, r1(x.walk), r1(x.hurt), x.lastPower, Math.round(x.stats.dmg), x.stats.shots, x.stats.hits, x.stats.kills]),
+    h: S.heroes.map((x) => [r1(x.x), r1(x.y), Math.round(x.hp), Math.round(x.shield), Math.round(x.energy), r1(x.angle), x.facing, x.dead ? 1 : 0, x.frozen || 0, x.cd, x.supCd, r1(x.walk), r1(x.hurt), x.lastPower, Math.round(x.stats.dmg), x.stats.shots, x.stats.hits, x.stats.kills, x.lastAngle ?? null]),
     b: S.boss ? [Math.round(S.boss.hp), S.boss.enraged ? 1 : 0, S.boss.dead ? 1 : 0, r1(S.boss.hurt)] : null,
     p: S.projs.map((q) => [r1(q.x), r1(q.y), r1(q.vx), r1(q.vy), q.alive ? 1 : 0, Math.round(q.delay * 1000) / 1000, q.col || null, q.wt || null, q.tier || 0, q.w.ult ? 1 : 0, q.w.fly ? 1 : 0, q.w.r, heroIdx(q.owner), q.w.windScale ?? 1]) };
 }
@@ -1689,7 +1694,7 @@ function netApplySnap(d) {
   d.h.forEach((a, i) => { const x = S.heroes[i]; if (!x) return;
     if (x.tx == null || Math.hypot(a[0] - x.x, a[1] - x.y) > 160) { x.x = a[0]; x.y = a[1]; }
     x.tx = a[0]; x.ty = a[1]; x.hp = a[2]; x.shield = a[3]; x.energy = a[4]; x.angle = a[5]; x.facing = a[6]; x.dead = !!a[7]; x.frozen = a[8]; x.cd = a[9]; x.supCd = a[10]; x.walk = a[11]; x.hurt = a[12]; x.lastPower = a[13];
-    x.stats.dmg = a[14]; x.stats.shots = a[15]; x.stats.hits = a[16]; x.stats.kills = a[17]; });
+    x.stats.dmg = a[14]; x.stats.shots = a[15]; x.stats.hits = a[16]; x.stats.kills = a[17]; x.lastAngle = a[18]; });
   if (S.boss && d.b) { S.boss.hp = d.b[0]; S.boss.enraged = !!d.b[1]; S.boss.dead = !!d.b[2]; S.boss.hurt = d.b[3]; }
   S.projs = d.p.map((a, i) => { const owner = a[12] === -2 ? S.boss : S.heroes[a[12]]; let q = S.projs[i];
     if (!q || q.owner !== owner || Math.hypot(q.x - a[0], q.y - a[1]) > 120) q = { trail: [] };

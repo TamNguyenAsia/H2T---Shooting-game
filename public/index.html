@@ -324,11 +324,11 @@ details summary{cursor:pointer;font-weight:600}
 .pow:disabled{cursor:not-allowed}
 .pow span{display:grid;align-content:center;justify-items:center;line-height:1}
 .pow small{font:700 .58rem var(--f-body);color:inherit;opacity:.8;margin-top:2px}
-.specials{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(100% + 8px);display:grid;grid-auto-flow:row;gap:6px}
-.spc{display:grid;place-items:center;align-content:center;width:46px;height:46px;padding:0;border-radius:50%;
+.specials{position:absolute;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(100% + 6px);display:grid;grid-auto-flow:row;gap:4px}
+.spc{display:grid;place-items:center;align-content:center;width:36px;height:36px;padding:0;border-radius:50%;
   background:radial-gradient(circle at 50% 35%,#5a4a7e,#231a38);border:2px solid #8a7ab0;box-shadow:0 3px 0 rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.2)}
-.spc b{font:800 .82rem/1 var(--f-display);color:#ffe08a;text-shadow:0 1px 0 #000}
-.spc small{font:700 .55rem/1 var(--f-body);color:#9fd8ff;margin-top:2px}
+.spc b{font:800 .66rem/1 var(--f-display);color:#ffe08a;text-shadow:0 1px 0 #000}
+.spc small{font:700 .48rem/1 var(--f-body);color:#9fd8ff;margin-top:1px}
 .spc.sel{background:radial-gradient(circle at 50% 35%,#ffcf6a,#c8761a);border-color:#fff2b0;box-shadow:0 0 12px rgba(255,200,80,.8)}
 .spc.sel b{color:#3a1e00;text-shadow:none}.spc.sel small{color:#5a2e00}
 .spc:disabled{filter:grayscale(.8) brightness(.65);cursor:not-allowed}
@@ -362,8 +362,8 @@ details summary{cursor:pointer;font-weight:600}
   .hud-bot{padding-top:12px;gap:10px}
   .dpad{--d:118px}.dp-c b{font-size:1rem}
   .fire-wrap{width:138px;height:92px}.fire{width:90px;height:90px;font-size:1.45rem}.pow{width:52px;height:52px}.pow span{font-size:.85rem}
-  .spc{width:36px;height:36px}.spc b{font-size:.68rem}.spc small{display:none}.who{display:none}
-  .specials{grid-auto-flow:column;grid-template-rows:repeat(4,auto);bottom:calc(100% + 4px);gap:4px}
+  .spc{width:28px;height:28px;border-width:1.5px}.spc b{font-size:.56rem}.spc small{display:none}.who{display:none}
+  .specials{grid-auto-flow:column;grid-template-rows:repeat(4,auto);bottom:calc(100% + 4px);gap:3px}
   .sk{width:44px;height:44px}.who canvas{width:32px;height:32px}.buffs{min-height:18px}.rticks{height:11px;font-size:.55rem}.ptrack{height:14px}
   #mini{width:160px;height:73px}
   .tool{width:32px;height:32px}
@@ -504,7 +504,7 @@ details summary{cursor:pointer;font-weight:600}
       <button class="dp down" id="bDown" data-hold="down" type="button" aria-label="Giảm góc"></button>
       <button class="dp left" id="bLeft" data-hold="left" type="button" aria-label="Sang trái"></button>
       <button class="dp right" id="bRight" data-hold="right" type="button" aria-label="Sang phải"></button>
-      <div class="dp-c"><svg id="dialSvg" viewBox="0 0 80 46" aria-hidden="true"><path d="M6 42 A34 34 0 0 1 74 42" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="5" stroke-linecap="round"/><line id="needle" x1="40" y1="42" x2="72" y2="42" stroke="#ffd25e" stroke-width="3" stroke-linecap="round"/></svg><b id="angVal">45°</b></div>
+      <div class="dp-c"><svg id="dialSvg" viewBox="0 0 80 46" aria-hidden="true"><path d="M6 42 A34 34 0 0 1 74 42" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="5" stroke-linecap="round"/><line id="needleOld" x1="40" y1="42" x2="72" y2="42" stroke="#5fd0ff" stroke-width="2" stroke-dasharray="3 3" stroke-linecap="round" style="display:none"/><line id="needle" x1="40" y1="42" x2="72" y2="42" stroke="#ffd25e" stroke-width="3" stroke-linecap="round"/></svg><b id="angVal">45°</b></div>
     </div>
     <div class="mid-bot">
       <div class="slots-row">
