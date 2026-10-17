@@ -22,7 +22,10 @@ module.exports = function attachSocial(server, { readToken, store, R, rng }) {
   const presence = () => [...users.values()].map((u) => ({ name: u.name, room: u.room || null, playing: !!(u.room && rooms.get(u.room) && rooms.get(u.room).status === 'playing') }))
     .sort((a, b) => a.name.localeCompare(b.name));
   const roomSummary = (r) => ({ id: r.id, name: r.name, host: nameOf(r.host), mode: r.mode, size: r.size, boss: r.boss, map: r.map, status: r.status, count: r.members.length, cap: cap(r) });
-  const roomFull = (r) => ({ ...roomSummary(r), hostUid: r.host, diff: r.diff, members: r.members.map((m) => ({ uid: m.uid, name: m.name, team: m.team, ready: m.ready })), chat: r.chat });
+  const roomFull = (r) => ({ ...roomSummary(r), hostUid: r.host, diff: r.diff, members: r.members.map((m) => ({ uid: m.uid, name: m.name, team: m.team, ready: m.ready, voice: !!m.voice, mic: m.mic !== false })), chat: r.chat });
+  // Máy chủ STUN/TURN cho voice chat (WebRTC). Đặt TURN_URL, TURN_USER, TURN_PASS nếu muốn chạy ổn trên mạng di động/công ty.
+  const iceServers = [{ urls: (process.env.STUN_URLS || 'stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302').split(',') }];
+  if (process.env.TURN_URL) iceServers.push({ urls: process.env.TURN_URL.split(','), username: process.env.TURN_USER || '', credential: process.env.TURN_PASS || '' });
   const nameOf = (uid) => (users.get(uid) || {}).name || '?';
   const cap = (r) => (r.mode === 'boss' ? 4 : r.size * 2);
   const broadcastLobby = () => toAll({ type: 'lobby', online: presence(), rooms: [...rooms.values()].map(roomSummary) });
@@ -182,6 +185,15 @@ module.exports = function attachSocial(server, { readToken, store, R, rng }) {
         if (!msg.accept) { if (host) toUser(room.host, { type: 'info', text: `${u.name} đã từ chối lời mời` }); return; }
         const e = joinRoom(uid, room); if (e) err(e); return;
       }
+      case 'voice': { // bật/tắt tham gia voice, bật/tắt mic
+        if (!r) return; const me = r.members.find((m) => m.uid === uid); if (!me) return;
+        if (msg.on != null) me.voice = !!msg.on; if (msg.mic != null) me.mic = !!msg.mic; pushRoom(r); return;
+      }
+      case 'rtc': { // tín hiệu WebRTC (offer/answer/ICE) giữa 2 người cùng phòng
+        if (!r) return; const t = r.members.find((m) => m.name === msg.to); if (!t) return;
+        const s2 = JSON.stringify(msg.d || {}); if (s2.length > 20000) return;
+        toUser(t.uid, { type: 'rtc', from: u.name, d: msg.d }); return;
+      }
       case 'g': { // chuyển dữ liệu trận: host -> mọi người, khách -> host
         if (!r || r.status !== 'playing') return;
         if (uid === r.host) toRoom(r, { type: 'g', d: msg.d }, uid); else toUser(r.host, { type: 'g', from: uid, d: msg.d });
@@ -198,7 +210,7 @@ module.exports = function attachSocial(server, { readToken, store, R, rng }) {
     if (!u) { u = { uid: user.id, name: user.username, socks: new Set(), room: null }; users.set(user.id, u); }
     u.socks.add(ws); ws.isAlive = true;
     const r = u.room && rooms.get(u.room);
-    send(ws, { type: 'welcome', me: u.name, online: presence(), rooms: [...rooms.values()].map(roomSummary), chat: globalChat, room: r ? roomFull(r) : null });
+    send(ws, { type: 'welcome', me: u.name, ice: iceServers, online: presence(), rooms: [...rooms.values()].map(roomSummary), chat: globalChat, room: r ? roomFull(r) : null });
     if (u.socks.size === 1) broadcastLobby();
     ws.on('pong', () => (ws.isAlive = true));
     ws.on('message', (raw) => { let msg; try { msg = JSON.parse(raw); } catch (e) { return; } onMessage(user.id, msg).catch((e) => console.error('[H2T ws]', e)); });

@@ -1443,14 +1443,14 @@ const Social = { ws: null, me: null, online: [], rooms: [], room: null, chat: []
     ws.onclose = () => { if (this.ws !== ws) return; this.ws = null; this.up = false; socialRender();
       if (Net.token) { clearTimeout(this.timer); this.timer = setTimeout(() => this.connect(), Math.min(15000, 1000 * 2 ** this.tries++)); } };
   },
-  close() { clearTimeout(this.timer); const ws = this.ws; this.ws = null; this.up = false; this.room = null; this.online = []; if (ws) ws.close(); },
+  close() { Voice.leave(true); clearTimeout(this.timer); const ws = this.ws; this.ws = null; this.up = false; this.room = null; this.online = []; if (ws) ws.close(); },
   send(o) { if (this.ws && this.ws.readyState === 1) { this.ws.send(JSON.stringify(o)); return true; } toast('Chưa kết nối được máy chủ phòng/chat, đang thử lại…', true); return false; },
   on(m) {
     switch (m.type) {
-      case 'welcome': this.me = m.me; this.online = m.online; this.rooms = m.rooms; this.chat = m.chat || []; this.room = m.room;
+      case 'welcome': if (m.ice) Voice.ice = m.ice; this.me = m.me; this.online = m.online; this.rooms = m.rooms; this.chat = m.chat || []; this.room = m.room;
         if (m.room && m.room.status === 'playing' && !(S && S.net)) this.send({ type: 'roomLeave' }); socialRender(); break;
       case 'lobby': this.online = m.online; this.rooms = m.rooms; socialRender(); break;
-      case 'room': { const was = this.room; this.room = m.room; if (!was && m.room && !S) { ui.tab = 'room'; saveUi(); } socialRender(true); break; }
+      case 'room': { const was = this.room; this.room = m.room; Voice.sync(m.room); if (!was && m.room && !S) { ui.tab = 'room'; saveUi(); } socialRender(true); break; }
       case 'chat':
         if (m.scope === 'room') { if (this.room) { this.room.chat.push(m.msg); if (this.room.chat.length > 40) this.room.chat.shift(); }
           if (S && S.net && m.msg.from) feed(`${m.msg.from}: ${m.msg.text}`, '#9fdcff', true); }
@@ -1464,9 +1464,87 @@ const Social = { ws: null, me: null, online: [], rooms: [], room: null, chat: []
       case 'battleResult': onlineResult(m); break;
       case 'battleAbort': toast(m.reason, true); if (S && S.net) exitBattle(); break;
       case 'peerLeft': peerLeft(m.uid); break;
+      case 'rtc': Voice.signal(m.from, m.d); break;
     }
   },
 };
+/* ---------- VOICE: nói chuyện trực tiếp trong phòng (WebRTC, mỗi người nối thẳng với từng người) ---------- */
+const MIC_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const Voice = { on: false, mic: true, stream: null, pcs: new Map(), audios: new Map(), muted: new Set(), speaking: new Set(), ice: [{ urls: ['stun:stun.l.google.com:19302'] }], meter: null, levels: new Map(),
+  async join() {
+    if (this.on || !Social.room) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Trình duyệt không hỗ trợ micro (cần https)', true); return; }
+    try { this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+    catch (e) { toast('Không mở được micro: hãy cho phép trình duyệt dùng micro', true); return; }
+    ensureAudio(); this.on = true; this.mic = true; this.watch('me', this.stream);
+    Social.send({ type: 'voice', on: true, mic: true }); this.startMeter(); socialRender(true); updVoiceUi();
+  },
+  leave(silent) {
+    if (!this.on) return; this.on = false;
+    for (const name of [...this.pcs.keys()]) this.drop(name);
+    if (this.stream) this.stream.getTracks().forEach((t) => t.stop()); this.stream = null; this.levels.clear(); this.speaking.clear();
+    clearInterval(this.meter); this.meter = null;
+    if (!silent) Social.send({ type: 'voice', on: false }); socialRender(true); updVoiceUi();
+  },
+  toggleMic() { if (!this.on) return; this.mic = !this.mic; this.stream.getAudioTracks().forEach((t) => (t.enabled = this.mic)); Social.send({ type: 'voice', mic: this.mic }); socialRender(true); updVoiceUi(); },
+  toggleMute(name) { if (this.muted.has(name)) this.muted.delete(name); else this.muted.add(name); const a = this.audios.get(name); if (a) a.muted = this.muted.has(name); socialRender(true); },
+  // Gọi mỗi khi phòng thay đổi: nối với người mới bật voice, ngắt với người đã tắt/rời phòng
+  sync(room) {
+    if (!room) { this.leave(true); return; }
+    if (!this.on) return;
+    const want = new Set(room.members.filter((m) => m.voice && m.name !== Social.me).map((m) => m.name));
+    for (const name of [...this.pcs.keys()]) if (!want.has(name)) this.drop(name);
+    for (const name of want) if (!this.pcs.has(name) && Social.me < name) this.call(name); // người có tên nhỏ hơn chủ động gọi, tránh 2 bên cùng gọi
+    updVoiceUi();
+  },
+  peer(name) {
+    let e = this.pcs.get(name); if (e) return e;
+    const pc = new RTCPeerConnection({ iceServers: this.ice }); e = { pc, queue: [] }; this.pcs.set(name, e);
+    this.stream.getTracks().forEach((t) => pc.addTrack(t, this.stream));
+    pc.onicecandidate = (ev) => { if (ev.candidate) Social.send({ type: 'rtc', to: name, d: { c: ev.candidate } }); };
+    pc.ontrack = (ev) => { let a = this.audios.get(name); if (!a) { a = new Audio(); a.autoplay = true; a.playsInline = true; this.audios.set(name, a); }
+      a.srcObject = ev.streams[0]; a.muted = this.muted.has(name); a.play().catch(() => {}); this.watch(name, ev.streams[0]); };
+    pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed') { toast(`Không nối được voice với ${name} (mạng chặn kết nối trực tiếp)`, true); } updVoiceUi(); };
+    return e;
+  },
+  async call(name) { const { pc } = this.peer(name); const offer = await pc.createOffer(); await pc.setLocalDescription(offer); Social.send({ type: 'rtc', to: name, d: { sdp: pc.localDescription } }); },
+  async signal(from, d) {
+    if (!this.on || !d) return;
+    try {
+      if (d.sdp) {
+        const e = this.peer(from), pc = e.pc;
+        await pc.setRemoteDescription(d.sdp);
+        for (const c of e.queue.splice(0)) await pc.addIceCandidate(c).catch(() => {});
+        if (d.sdp.type === 'offer') { const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); Social.send({ type: 'rtc', to: from, d: { sdp: pc.localDescription } }); }
+      } else if (d.c) { const e = this.peer(from); if (e.pc.remoteDescription) await e.pc.addIceCandidate(d.c).catch(() => {}); else e.queue.push(d.c); }
+    } catch (err) { console.warn('[voice]', err); }
+  },
+  drop(name) { const e = this.pcs.get(name); if (e) { try { e.pc.close(); } catch (_) {} this.pcs.delete(name); } const a = this.audios.get(name); if (a) { a.srcObject = null; this.audios.delete(name); } this.levels.delete(name); this.speaking.delete(name); },
+  // Đo âm lượng để biết ai đang nói
+  watch(name, stream) { if (!AC) return; try { const src = AC.createMediaStreamSource(stream), an = AC.createAnalyser(); an.fftSize = 512; src.connect(an); this.levels.set(name, { an, buf: new Uint8Array(an.fftSize) }); } catch (_) {} },
+  startMeter() {
+    clearInterval(this.meter);
+    this.meter = setInterval(() => { const prev = [...this.speaking].join(); this.speaking.clear();
+      for (const [name, l] of this.levels) { l.an.getByteTimeDomainData(l.buf); let m = 0; for (const v of l.buf) m = Math.max(m, Math.abs(v - 128)); const who = name === 'me' ? Social.me : name;
+        if (m > 10 && !(name === 'me' && !this.mic)) this.speaking.add(who); }
+      if ([...this.speaking].join() !== prev) updVoiceUi(); }, 180);
+  },
+};
+function updVoiceUi() {
+  const t = $('#tMic'); if (t) { t.hidden = !Voice.on; t.classList.toggle('off', !Voice.mic); }
+  const bar = $('#voiceBar'); if (bar) { bar.innerHTML = ''; bar.hidden = !Voice.on;
+    if (Voice.on && Social.room) for (const m of Social.room.members.filter((x) => x.voice)) bar.append(h('span', { class: 'vb' + (Voice.speaking.has(m.name) ? ' talk' : '') + (m.mic ? '' : ' off') }, m.name)); }
+  document.querySelectorAll('.mchip[data-name]').forEach((el) => el.classList.toggle('talk', Voice.speaking.has(el.dataset.name)));
+}
+function voiceRow(r) {
+  const inVoice = r.members.filter((m) => m.voice);
+  return h('div', { class: 'voicerow' },
+    h('span', { class: 'lbl' }, `Voice · ${inVoice.length} người`),
+    Voice.on ? [h('button', { class: Voice.mic ? 'btn sm' : 'btn sm danger', type: 'button', id: 'btnMic', onclick: () => Voice.toggleMic() }, Voice.mic ? 'Tắt mic' : 'Bật mic'),
+      h('button', { class: 'btn sm', type: 'button', id: 'btnVoiceLeave', onclick: () => Voice.leave() }, 'Rời voice')]
+      : h('button', { class: 'primary', type: 'button', id: 'btnVoiceJoin', onclick: () => Voice.join() }, 'Vào voice'),
+    h('span', { class: 'note' }, 'Bật mic để nói chuyện với mọi người trong phòng; voice vẫn giữ khi vào trận.'));
+}
 let socialT = null;
 function socialRender(now) { updRoomBadge(); if (ui.tab !== 'room' || $('#lobby').hidden) return; clearTimeout(socialT); if (now) renderLobby(); else socialT = setTimeout(renderLobby, 120); }
 function updRoomBadge() { const b = $('#tab-room'); if (!b) return; let s2 = b.querySelector('.badge-n'); if (!s2) { s2 = h('span', { class: 'badge-n' }); b.append(s2); } s2.textContent = Social.up ? String(Social.online.length) : '…'; }
@@ -1523,7 +1601,9 @@ function onlineCard() {
 }
 function roomCard(r) {
   const meHost = r.host === Social.me, me = r.members.find((m) => m.name === Social.me) || {}, set = (o) => Social.send({ type: 'roomSet', ...o });
-  const chip = (m) => h('div', { class: 'mchip' + (m.name === Social.me ? ' me' : '') }, h('b', {}, m.name), m.name === r.host ? h('span', { class: 'tag host' }, 'Chủ phòng') : h('span', { class: 'tag' + (m.ready ? ' ok' : '') }, m.ready ? 'Sẵn sàng' : 'Chưa sẵn sàng'),
+  const chip = (m) => h('div', { class: 'mchip' + (m.name === Social.me ? ' me' : '') + (Voice.speaking.has(m.name) ? ' talk' : ''), 'data-name': m.name },
+    m.voice ? (() => { const i = h('span', { class: 'vic' + (m.mic ? '' : ' off'), title: m.mic ? 'Đang trong voice' : 'Đã tắt mic' }); i.innerHTML = MIC_SVG; return i; })() : null, h('b', {}, m.name),
+    Voice.on && m.voice && m.name !== Social.me ? h('button', { class: 'btn sm', type: 'button', title: 'Tắt/bật tiếng người này', onclick: () => Voice.toggleMute(m.name) }, Voice.muted.has(m.name) ? 'Bật tiếng' : 'Tắt tiếng') : null, m.name === r.host ? h('span', { class: 'tag host' }, 'Chủ phòng') : h('span', { class: 'tag' + (m.ready ? ' ok' : '') }, m.ready ? 'Sẵn sàng' : 'Chưa sẵn sàng'),
     meHost && m.name !== Social.me ? h('button', { class: 'btn sm', type: 'button', onclick: () => Social.send({ type: 'roomKick', name: m.name }) }, 'Mời ra') : null);
   const botChip = (label) => h('div', { class: 'mchip bot' }, h('b', {}, label), h('span', { class: 'tag' }, 'Máy'));
   let teams;
@@ -1542,7 +1622,7 @@ function roomCard(r) {
   return h('div', { class: 'card', style: 'display:grid;gap:12px', id: 'roomCard' },
     h('div', { class: 'row', style: 'justify-content:space-between' }, h('div', {}, h('span', { class: 'lbl' }, `Phòng · ${r.members.length}/${r.cap} người${r.status === 'playing' ? ' · đang đánh' : ''}`), h('h3', { style: 'margin:2px 0 0' }, r.name)),
       h('button', { class: 'btn danger sm', type: 'button', id: 'btnRoomLeave', onclick: () => Social.send({ type: 'roomLeave' }) }, 'Rời phòng')),
-    settings, teams,
+    voiceRow(r), settings, teams,
     h('div', { class: 'row' }, meHost
       ? h('button', { class: 'primary', type: 'button', id: 'btnRoomStart', disabled: !allReady || r.status !== 'lobby', onclick: () => { ensureAudio(); Social.send({ type: 'roomStart' }); } }, allReady ? 'Bắt đầu trận' : 'Đợi mọi người sẵn sàng')
       : h('button', { class: me.ready ? 'btn' : 'primary', type: 'button', id: 'btnRoomReady', onclick: () => { ensureAudio(); Social.send({ type: 'roomReady', ready: !me.ready }); } }, me.ready ? 'Huỷ sẵn sàng' : 'Sẵn sàng'),
@@ -1551,6 +1631,7 @@ function roomCard(r) {
 // Chat nhanh trong trận
 function openBattleChat() { const b = $('#bchat'); b.hidden = !b.hidden; if (!b.hidden) $('#bchatIn').focus(); }
 $('#tChat').addEventListener('click', openBattleChat);
+$('#tMic').addEventListener('click', () => Voice.toggleMic());
 $('#bchatIn').addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') { $('#bchat').hidden = true; return; }
   if (e.key === 'Enter') { const t = e.target.value.trim(); if (t && Social.send({ type: 'chat', scope: Social.room ? 'room' : 'global', text: t })) e.target.value = ''; $('#bchat').hidden = true; } });
 
@@ -1728,6 +1809,6 @@ let last = performance.now();
 function frame(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; if (S && !$('#battle').hidden) { if (isGuest()) updateGuest(dt); else update(dt); draw(); updateHUD(); netTick(); } requestAnimationFrame(frame); }
 requestAnimationFrame(frame);
 // Chỉ dùng khi kiểm thử: mở game với ?debug để truy cập trạng thái trận từ console
-if (/[?&]debug\b/.test(location.search)) window.__h2t = { S: () => S, gameOver: (w) => gameOver(w), Social };
+if (/[?&]debug\b/.test(location.search)) window.__h2t = { S: () => S, gameOver: (w) => gameOver(w), Social, Voice };
 boot();
 })();

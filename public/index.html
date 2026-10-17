@@ -389,10 +389,22 @@ details summary{cursor:pointer;font-weight:600}
 .rteam h4{margin:0;color:var(--team)}
 .mchip{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:9px;background:#1a1229;border:1px solid var(--line)}
 .mchip.me{border-color:var(--brass)}.mchip.bot{opacity:.6;border-style:dashed}
-.mchip b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mchip{flex-wrap:wrap}
+.mchip b{flex:1 1 70px;min-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mchip .btn.sm{padding:2px 7px;font-size:.68rem;white-space:nowrap}
 .tag{font-size:.68rem;padding:1px 6px;border-radius:6px;background:#2a2040;color:var(--muted)}
 .tag.ok{background:#1f4a2a;color:#9ff0b0}.tag.host{background:#4a3a10;color:#ffe08a}
 .badge-n{margin-left:auto;font-size:.7rem;padding:0 6px;border-radius:8px;background:#1f4a2a;color:#9ff0b0}
+/* Voice */
+.voicerow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#1a1229;border:1px solid var(--line)}
+.voicerow .note{margin:0;font-size:.72rem;flex-basis:100%}
+.vic{display:inline-grid;width:18px;height:18px;color:#7fdc8c}.vic svg{width:100%;height:100%}.vic.off{color:#ff6b7d}
+.mchip.talk{box-shadow:0 0 0 2px #5fd38a,0 0 12px rgba(95,211,138,.6)}
+.tool#tMic.off{color:#ff6b7d;border-color:#ff6b7d}
+#voiceBar{position:absolute;top:54px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:4px;max-width:46%;pointer-events:none;z-index:4}
+#voiceBar .vb{font-size:.7rem;padding:2px 8px;border-radius:10px;background:rgba(18,12,32,.75);border:1px solid rgba(255,255,255,.15);color:var(--muted)}
+#voiceBar .vb.talk{color:#fff;border-color:#5fd38a;box-shadow:0 0 8px rgba(95,211,138,.7)}
+#voiceBar .vb.off{text-decoration:line-through;opacity:.6}
 #invites{position:fixed;left:16px;bottom:16px;display:grid;gap:8px;z-index:60;max-width:min(360px,calc(100vw - 32px))}
 .invite{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:#2a1f44;border:1px solid var(--brass);box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .invite .note{margin:0}
@@ -472,6 +484,7 @@ details summary{cursor:pointer;font-weight:600}
         <button class="tool" id="tZoomIn" type="button" aria-label="Phóng to">+</button>
         <button class="tool" id="tCenter" type="button" aria-label="Về nhân vật đang bắn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg></button>
         <button class="tool" id="tFull" type="button" aria-label="Toàn màn hình"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <button class="tool" id="tMic" type="button" aria-label="Bật tắt mic" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
         <button class="tool" id="tChat" type="button" aria-label="Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v10H9l-5 4z"/></svg></button>
         <button class="tool" id="tMusic" type="button" aria-label="Bật tắt nhạc nền"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path id="musSlash" d="M3 3l18 18" style="display:none"/></svg></button>
         <button class="tool" id="tSound" type="button" aria-label="Bật tắt âm thanh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="sndWave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
@@ -483,6 +496,7 @@ details summary{cursor:pointer;font-weight:600}
   <div id="feed"></div>
   <div id="banner"></div>
   <div id="usePop" aria-live="polite"></div>
+  <div id="voiceBar" hidden></div>
   <div id="bchat" hidden><input id="bchatIn" maxlength="200" placeholder="Nhập tin nhắn, Enter để gửi, Esc để đóng" autocomplete="off"></div>
   <div class="hud-bot locked" id="hudBot">
     <div class="dpad" aria-label="Điều khiển góc bắn và di chuyển">

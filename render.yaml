@@ -24,3 +24,10 @@ services:
       # Tên đăng nhập có quyền admin, cách nhau bằng dấu phẩy. Render hỏi giá trị này khi tạo Blueprint.
       - key: ADMIN_USERNAMES
         sync: false
+      # (Không bắt buộc) Máy chủ TURN cho voice chat khi người chơi dùng mạng chặn kết nối trực tiếp:
+      # - key: TURN_URL
+      #   value: "turn:turn.example.com:3478"
+      # - key: TURN_USER
+      #   sync: false
+      # - key: TURN_PASS
+      #   sync: false
