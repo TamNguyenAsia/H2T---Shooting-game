@@ -196,7 +196,10 @@ function drawItemIcon(cnv, it) {
   else paintItem(c, it.slot, it.tier, it.kind);
 }
 function drawMatIcon(cnv, k) {
-  const c = iconCtx(cnv); c.strokeStyle = OL; c.lineWidth = 2;
+  const sp = img(`mats/${k}.webp`), c = iconCtx(cnv);
+  if (ready(sp)) { c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cnv.width, cnv.height); drawSpr(c, sp, 0, 0, cnv.width, cnv.height); return; }
+  if (!sp._bad) sp.addEventListener('load', () => drawMatIcon(cnv, k), { once: true });
+  c.strokeStyle = OL; c.lineWidth = 2;
   if (k === 'gold') { c.fillStyle = '#f4c542'; c.beginPath(); c.arc(32, 32, 24, 0, 7); c.fill(); c.stroke(); c.fillStyle = '#ffe48a'; c.beginPath(); c.arc(32, 32, 17, 0, 7); c.fill(); c.fillStyle = '#c8901e'; c.font = '800 22px "Baloo 2",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('V', 32, 34); }
   else if (k === 'stone') { c.fillStyle = '#7f95b8'; c.beginPath(); c.moveTo(32, 8); c.lineTo(52, 24); c.lineTo(46, 52); c.lineTo(18, 52); c.lineTo(12, 24); c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#b8cbe8'; c.beginPath(); c.moveTo(32, 8); c.lineTo(40, 26); c.lineTo(24, 26); c.closePath(); c.fill(); c.strokeStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.moveTo(24, 26); c.lineTo(18, 52); c.moveTo(40, 26); c.lineTo(46, 52); c.stroke(); }
   else if (k[0] === 't') { const col = TC(+k[1]); c.save(); c.shadowColor = col; c.shadowBlur = 10; c.fillStyle = col; c.beginPath(); c.moveTo(32, 4); c.lineTo(46, 20); c.lineTo(42, 56); c.lineTo(22, 56); c.lineTo(18, 20); c.closePath(); c.fill(); c.restore(); c.stroke(); c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.moveTo(32, 4); c.lineTo(36, 20); c.lineTo(32, 56); c.lineTo(28, 20); c.closePath(); c.fill(); }
@@ -451,14 +454,14 @@ function paneFight(pane) {
       h('div', { class: 'opt' }, h('span', { class: 'lbl' }, 'Trang bị của đội Xanh'), seg(TIERS.map((t, i) => [i, t.n]), c.tier, (v) => set({ tier: v }), 'pvpTier')),
       h('div', { class: 'opt' }, h('span', { class: 'lbl' }, 'Bản đồ'), maps),
       h('div', { class: 'row' }, h('button', { class: 'primary', type: 'button', id: 'btnPvp', disabled: ui.busy, onclick: () => startFight({ mode: 'pvp', ...c }) }, 'Vào trận'),
-        h('span', { class: 'note' }, c.opp === 'bot' ? `Thắng: +${fmt(100 + c.tier * 80)} vàng, +${3 + c.tier * 2} đá. Thua: +30 vàng, +1 đá.` : 'Chế độ 2 người cùng máy không có phần thưởng.'))),
+        h('span', { class: 'note' }, c.opp === 'bot' ? (() => { const w = R.REWARD.pvpWin(c.tier), l = R.REWARD.pvpLose(c.tier); return `Thắng: +${fmt(w.gold)} vàng, +${w.stone} đá. Thua: +${fmt(l.gold)} vàng, +${l.stone} đá.`; })() : 'Chế độ 2 người cùng máy không có phần thưởng.'))),
     h('section', { class: 'card', style: 'display:grid;gap:14px' },
       h('div', { class: 'vsbar' }, h('h3', { style: 'margin-right:auto' }, 'Đánh boss'), h('div', { class: 'opt' }, h('span', { class: 'lbl' }, 'Số người trong đội'), seg([[2, '2'], [3, '3'], [4, '4']], ui.boss.size, (v) => { ui.boss.size = v; saveUi(); renderLobby(); }, 'bossSize'))),
       h('p', { class: 'note', style: 'margin:0' }, 'Đồng đội mặc trang bị giống bạn. Máu boss tăng theo số người. Hạ boss nhận vàng, Đá cường hóa, Tinh thạch của bậc kế tiếp và có thể rơi trang bị.'),
       h('div', { class: 'bossgrid' }, BOSSES.map((b, i) => { const bs = R.bossStats(b, ui.boss.size), t = TIERS[b.t]; const cv = h('canvas', { width: 440, height: 200 });
         drawMapThumb(cv, b.map, true); drawBossShape(cv.getContext('2d'), b, 330, 182, 0.95, false, 0);
         return h('div', { class: 'card bcard', style: `--tc:${t.c}` }, cv, h('div', {}, h('span', { class: 'lbl' }, t.n), h('h4', {}, b.n)),
-          h('div', { class: 'meta' }, h('span', {}, 'Máu ', h('b', {}, fmt(bs.hp))), h('span', {}, 'Lực chiến đề nghị ', h('b', {}, fmt(bs.power))), h('span', {}, 'Rơi ', h('b', {}, `${MATS['t' + Math.min(5, b.t + 1)]}, ${fmt(200 + b.t * 250)} vàng`)), h('span', {}, 'Đã hạ ', h('b', {}, P.rec.boss[b.t] || 0), ' lần')),
+          h('div', { class: 'meta' }, h('span', {}, 'Máu ', h('b', {}, fmt(bs.hp))), h('span', {}, 'Lực chiến đề nghị ', h('b', {}, fmt(bs.power))), h('span', {}, 'Rơi ', h('b', {}, `${MATS['t' + Math.min(5, b.t + 1)]}, ${fmt(R.REWARD.bossWin(b.t).gold)} vàng (thua: ${fmt(R.REWARD.bossLose(b.t).gold)})`)), h('span', {}, 'Đã hạ ', h('b', {}, P.rec.boss[b.t] || 0), ' lần')),
           my < bs.power * 0.8 ? h('div', { class: 'warnline' }, 'Lực chiến của bạn thấp hơn mức đề nghị.') : null,
           h('button', { class: 'btn', type: 'button', id: 'btnBoss' + i, disabled: ui.busy, onclick: () => startFight({ mode: 'boss', boss: i, size: ui.boss.size }) }, 'Khiêu chiến')); })))));
 }
@@ -518,7 +521,7 @@ $('#btnLogout').addEventListener('click', logout);
 $('#btnSoundL').addEventListener('click', () => { ensureAudio(); soundOn = !soundOn; updSound(); });
 
 /* =================== MAPS =================== */
-const POWER_SPEED = 42; // tốc độ thanh lực (đơn vị %/giây), trước đây 60
+const POWER_SPEED = 30; // tốc độ thanh lực (đơn vị %/giây); bản đầu 60, bản trước 42
 const W = 2400, H = 1100, G = 420, WIND_A = 10, HR = 22, DT = 1 / 240, SPEED = 1.7, TURN_TIME = 25, VEL = 10;
 const THEMES = {
   forest: { sky: ['#24467a', '#6f9fd0', '#f3d9a8'], sun: { x: 0.75, y: 0.22, c: '#fff3c4' }, far: '#4a6a92', near: '#3d6b56', g: ['#6a4a2e', '#4a321f', '#24170e'], top: '#5fa83e', hi: '#a9e06a', abyss: 'water', deco: 'tree', fx: 'leaf',
@@ -636,7 +639,7 @@ function enterBattle(bt) {
   if (bt.mode === 'boss') { const b = BOSSES[bt.boss], bs = bt.bossStats; boss = { isBoss: true, team: 1, name: b.n, b, x: W - 300, y: surf[W - 300], r: 90, hp: bs.hp, maxHp: bs.hp, atk: bs.atk, def: bs.def, crit: 0.08, dodge: 0, dead: false, step: 0, enraged: false, hurt: 0, stats: { dmg: 0, shots: 0, hits: 0, kills: 0 } }; }
   S = { bt, mode: bt.mode, mapId, th: THEMES[mapId], heroes, boss, order: [], slot: -1, turn: 0, round: 0, wind: 0, state: 'pause', pauseT: 1.2, projs: [], parts: [], floats: [], decos: [], fx: [],
     clouds: Array.from({ length: 10 }, () => ({ x: Math.random() * W, y: 40 + Math.random() * 360, s: 0.7 + Math.random() * 1.3, a: 0.12 + Math.random() * 0.16 })),
-    shake: 0, time: 0, acc: 0, bot: {}, stamina: 0, timer: TURN_TIME, weapon: 0, power: 0, pdir: 1, charging: false, cur: null, buff: null, sd: 1, lastShotBy: null, focus: null, walkTo: null, over: false };
+    shake: 0, time: 0, acc: 0, bot: {}, stamina: 0, timer: TURN_TIME, weapon: 0, power: 0, pdir: 1, charging: false, cur: null, buff: null, sp: new Set(), nl: 0, spDmg: 0, sd: 1, lastShotBy: null, focus: null, walkTo: null, over: false };
   const place = (hh, x) => { x = findGround(x); hh.x = x; hh.y = groundAt(x); };
   if (bt.mode === 'pvp') { const xs = bt.size === 2 ? [[260, 480], [W - 260, W - 480]] : [[380], [W - 380]]; const n = [0, 0]; for (const hh of heroes) place(hh, xs[hh.team][n[hh.team]++]); }
   else heroes.forEach((hh, i) => place(hh, [200, 360, 520, 680][i]));
@@ -647,6 +650,7 @@ function enterBattle(bt) {
   S.fx = Array.from({ length: 50 }, () => ({ x: Math.random(), y: Math.random(), v: 0.3 + Math.random() * 0.7, p: Math.random() * 6 }));
   renderBg(); renderTerrain();
   cam.z = zDefault(); cam.follow = true; cam.x = heroes[0].x - cssW / cam.z / 2; cam.y = heroes[0].y - cssH / cam.z * 0.6; clampCam();
+  Music.play(mapId, bt.mode === 'boss');
   buildTeamsHud(); $('#feed').innerHTML = ''; $('#leaveBox').hidden = true;
   banner(bt.mode === 'boss' ? boss.name : MAPS.find((m) => m.id === mapId).n, bt.mode === 'boss' ? 'Cả đội hợp sức hạ boss' : 'Hạ gục toàn bộ đội đối phương', bt.mode === 'boss' ? '#ff6b7d' : '#e9b94f');
   sfx('turn');
@@ -665,7 +669,7 @@ function nextTurn() {
 function beginTurn(hh) {
   S.turn++; S.cur = hh; S.wind = Math.round((Math.random() * 2 - 1) * 10);
   hh.cd = Math.max(0, hh.cd - 1); hh.supCd = Math.max(0, hh.supCd - 1); hh.energy = Math.min(100, hh.energy + 20);
-  S.stamina = hh.move; S.timer = TURN_TIME; S.weapon = 0; S.power = 0; S.pdir = 1; S.charging = false; S.buff = null; S.walkTo = null;
+  S.stamina = hh.move; S.timer = TURN_TIME; S.weapon = 0; S.power = 0; S.pdir = 1; S.charging = false; S.buff = null; S.walkTo = null; S.sp = new Set(); S.nl = NL_MAX; S.spDmg = 0;
   S.state = 'aim'; S.bot = { phase: 'wait', at: S.time + 0.9 }; cam.follow = true;
   banner(`Lượt của ${hh.name}`, hh.bot ? 'Máy đang điều khiển' : TEAMN[hh.team], TEAMC[hh.team]);
   drawPortrait($('#whoPic'), hh.L); sfx('turn');
@@ -724,6 +728,41 @@ function showUse(kind, name) {
 }
 // Đạn trong lượt sau khi cộng hiệu ứng vật phẩm (Rune lửa nổ rộng, Lông vũ gió bỏ qua gió)
 function shotW(w) { const b = S && S.buff; if (!b) return w; return { ...w, r: w.r * (b.rMul || 1), windScale: b.noWind ? 0 : w.windScale }; }
+/* ---------- kỹ năng đặc biệt (tốn năng lượng NL mỗi lượt) ---------- */
+// +1/+2 viên: thêm đạn nhưng mỗi viên yếu đi (chia sát thương); x2: bắn 2 loạt, mỗi loạt ×0.7. Bay: không gây sát thương, nhân vật bay theo đạn.
+const NL_MAX = 100, SPLIT = [1, 0.6, 0.45], X2_MUL = 0.7;
+const SPECIALS = [
+  { id: 'p10', n: '+10%', cost: 10, dmg: 10, key: '5', d: 'Tăng 10% sát thương' },
+  { id: 'p20', n: '+20%', cost: 20, dmg: 20, key: '6', d: 'Tăng 20% sát thương' },
+  { id: 'p50', n: '+50%', cost: 40, dmg: 50, key: '7', d: 'Tăng 50% sát thương' },
+  { id: 'x2', n: 'x2', cost: 60, key: '8', d: 'Bắn 2 loạt, mỗi loạt 70% sát thương' },
+  { id: 'fly', n: 'Bay', cost: 50, key: '9', d: 'Bay theo viên đạn tới chỗ rơi, không gây sát thương' },
+  { id: 'b1', n: '+1', cost: 30, key: '0', d: 'Thêm 1 viên, mỗi viên 60% sát thương' },
+  { id: 'b2', n: '+2', cost: 50, key: '-', d: 'Thêm 2 viên, mỗi viên 45% sát thương' },
+];
+const SPX = Object.fromEntries(SPECIALS.map((x) => [x.id, x]));
+function toggleSpecial(id, fromBot) {
+  if (!S || S.state !== 'aim' || S.charging) return; const hh = S.cur; if (!hh || hh.isBoss || (hh.bot && !fromBot)) return;
+  const sp = SPX[id], set = S.sp; if (!sp) return;
+  const drop = (k) => { if (set.has(k)) { set.delete(k); S.nl += SPX[k].cost; } };
+  if (set.has(id)) { drop(id); return; }
+  if (id === 'fly') [...set].forEach(drop); else drop('fly');
+  if (id === 'b1') drop('b2'); if (id === 'b2') drop('b1');
+  if (sp.cost > S.nl) { if (!fromBot) feed(`Không đủ năng lượng (cần ${sp.cost}, còn ${S.nl})`); return; }
+  set.add(id); S.nl -= sp.cost;
+}
+function botSpecials() {
+  const pool = ['p50', 'b1', 'x2', 'p20', 'p10', 'b2'];
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  for (const id of pool) if (SPX[id].cost <= S.nl && Math.random() < 0.5) toggleSpecial(id, true);
+}
+// Bay: đặt nhân vật ở chỗ viên đạn rơi; trạng thái 'settle' sẽ cho rơi xuống đất (hoặc xuống vực nếu không có đất)
+function flyLand(p, r) {
+  const hh = p.owner; let x = Math.max(16, Math.min(W - 16, r.x));
+  if (S.boss && !S.boss.dead && x > S.boss.x - 130) x = S.boss.x - 130;
+  hh.x = x; hh.y = Math.min(r.y, H + 70); hh.vy = 0; hh.facing = p.vx >= 0 ? 1 : -1;
+  burst(hh.x, Math.min(H - 20, hh.y) - HIT_Y, 'wind', 26); S.focus = { x: hh.x, y: Math.min(H - 100, hh.y) }; sfx('heal');
+}
 function selectWeapon(i, fromBot) {
   if (!S || S.state !== 'aim' || S.charging) return; const hh = S.cur; if (hh.isBoss || (hh.bot && !fromBot)) return;
   if (i === 3) { useSupport(hh, fromBot); return; }
@@ -737,11 +776,19 @@ function launch(e, angle, power, w, facing, delay) {
   const v = power * VEL; return { x: ox, y: oy, vx: facing * ca * v, vy: -sa * v, w, owner: e, team: e.team, delay, alive: true, trail: [] };
 }
 function fire() {
-  const hh = S.cur, w = shotW(SHOTS[S.weapon]); S.charging = false; hh.lastPower = Math.round(S.power * 10) / 10; S.walkTo = null;
+  const hh = S.cur, sp = S.sp, fly = sp.has('fly'); if (fly) S.weapon = 0;
+  let w = shotW(SHOTS[S.weapon]); S.charging = false; hh.lastPower = Math.round(S.power * 10) / 10; S.walkTo = null;
   if (w.ult) hh.energy = 0; if (w.cd) hh.cd = w.cd;
-  const n = w.count || 1; S.projs = [];
-  const col = (S.buff && S.buff.col) || TC(hh.L.weapon ?? 0);
-  for (let i = 0; i < n; i++) { const a = hh.angle + (n > 1 ? (i - (n - 1) / 2) * (w.spread || 5) : 0); const pr = launch(hh, a, S.power, w, hh.facing, 0); pr.col = col; S.projs.push(pr); }
+  const extra = fly ? 0 : sp.has('b2') ? 2 : sp.has('b1') ? 1 : 0, vol = !fly && sp.has('x2') ? 2 : 1;
+  w = { ...w, mul: fly ? 0 : w.mul * SPLIT[extra] * (vol === 2 ? X2_MUL : 1), fly };
+  S.spDmg = fly ? 0 : [...sp].reduce((a, id) => a + (SPX[id].dmg || 0), 0);
+  const n = (w.count || 1) + extra, spread = w.spread || 4; S.projs = [];
+  const col = fly ? '#c8ffe8' : (S.buff && S.buff.col) || TC(hh.L.weapon ?? 0), wt = typeOf(hh.L, 'weapon'), tier = hh.L.weapon ?? 0;
+  for (let v = 0; v < vol; v++) for (let i = 0; i < n; i++) {
+    const a = hh.angle + (n > 1 ? (i - (n - 1) / 2) * spread : 0);
+    const pr = launch(hh, a, S.power, w, hh.facing, v * 0.85); pr.col = col; pr.wt = wt; pr.tier = tier; S.projs.push(pr);
+  }
+  if (sp.size) feed(`${hh.name}: ${[...sp].map((id) => SPX[id].n).join(' ')}`, TEAMC[hh.team]);
   hh.stats.shots++; S.state = 'flying'; S.acc = 0; S.lastShotBy = hh; cam.follow = true; sfx(w.ult ? 'ult' : 'fire');
   burst(hh.x + hh.facing * 36, hh.y - HIT_Y - 10, 'muzzle', 8);
 }
@@ -764,7 +811,7 @@ function carve(cx, cy, r) {
 function heal(hh, v) { const b = hh.hp; hh.hp = Math.min(hh.maxHp, hh.hp + v); return Math.round(hh.hp - b); }
 function applyHit(src, tgt, mul) {
   let dmg = src.atk * mul * S.sd * (1 - R.red(tgt.def));
-  if (src === S.cur && S.buff && S.buff.dmg && !src.isBoss) dmg *= 1 + S.buff.dmg / 100;
+  if (src === S.cur && !src.isBoss) { const k = ((S.buff && S.buff.dmg) || 0) + (S.spDmg || 0); if (k) dmg *= 1 + k / 100; }
   const crit = Math.random() < src.crit; if (crit) dmg *= 1.6;
   const dodge = !tgt.isBoss && Math.random() < tgt.dodge; if (dodge) dmg *= 0.5;
   dmg = Math.max(1, Math.round(dmg));
@@ -815,6 +862,7 @@ function botAim(hh) {
     else if (s.kind === 'elixir' && hh.energy < 100) useSupport(hh, true);
     else if (s.kind === 'fire' || s.kind === 'frost' || s.kind === 'wind') useSupport(hh, true);
   }
+  botSpecials();
   let wi = 0; if (hh.energy >= 100) wi = 2; else if (hh.cd === 0 && Math.random() < 0.6) wi = 1; S.weapon = wi; const w = shotW(SHOTS[wi]);
   const cands = S.mode === 'boss' ? [{ type: 'boss', pri: 1, x: S.boss.x }] : S.heroes.filter((e) => e.team !== hh.team && !e.dead).map((e) => ({ type: 'hero', ref: e, x: e.x, pri: 1 + (1 - e.hp / e.maxHp) * 1.5 }));
   let best = null;
@@ -844,6 +892,7 @@ addEventListener('keydown', (e) => {
   if (e.key in KMAP) { keys[KMAP[e.key]] = true; if (humanCan()) S.walkTo = null; }
   if (e.key === ' ' && !e.repeat) startCharge();
   if ('1234'.includes(e.key) && e.key.length === 1) selectWeapon(+e.key - 1);
+  const spk = SPECIALS.find((x) => x.key === e.key); if (spk) { ensureAudio(); toggleSpecial(spk.id); }
   if (e.key === 'c' || e.key === 'C') cam.follow = true;
 });
 addEventListener('keyup', (e) => { if (e.key in KMAP) keys[KMAP[e.key]] = false; if (e.key === ' ') { if (inBattle()) e.preventDefault(); releaseCharge(); } });
@@ -873,7 +922,7 @@ $('#tLeave').addEventListener('click', () => { if (S && !S.over) $('#leaveBox').
 $('#leaveNo').addEventListener('click', () => { $('#leaveBox').hidden = true; });
 $('#leaveYes').addEventListener('click', async () => { $('#leaveBox').hidden = true; if (S) { S.over = true; S.state = 'over'; try { await act('battleEnd', { id: S.bt.id, forfeit: true }); } catch (e) {} } exitBattle(); });
 function goFull() { const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) { el.requestFullscreen({ navigationUI: 'hide' }).then(() => { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }).catch(() => {}); } }
-function exitBattle() { S = null; $('#battle').hidden = true; if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); showLobby(); }
+function exitBattle() { Music.stop(); S = null; $('#battle').hidden = true; if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); showLobby(); }
 // Điện thoại cầm dọc: xoay khung trận đấu 90° để luôn chơi ở màn hình ngang.
 function checkRotate() {
   const b = $('#battle'), rot = !b.hidden && matchMedia('(pointer: coarse)').matches && innerHeight > innerWidth;
@@ -913,8 +962,9 @@ function update(dt) {
     case 'bossPrep': S.prepT -= dt; if (S.prepT <= 0) bossAct(); break;
     case 'flying': { S.acc += dt * SPEED;
       while (S.acc >= DT) { S.acc -= DT; for (const p of S.projs) { if (!p.alive) continue; if (p.delay > 0) { p.delay -= DT; continue; } const r = physStep(p, DT);
-        if (r) { p.alive = false; if (r.out) { floatText(Math.max(60, Math.min(W - 60, r.x)), Math.min(H - 60, Math.max(80, r.y)), 'Trượt', '#cfc3e0'); S.focus = { x: Math.max(0, Math.min(W, r.x)), y: Math.min(H - 100, Math.max(100, r.y)) }; } else explode(r.x, r.y, p.w, p.owner, r); } } }
-      for (const p of S.projs) if (p.alive && p.delay <= 0) { p.trail.push({ x: p.x, y: p.y }); if (p.trail.length > 30) p.trail.shift(); }
+        if (r) { p.alive = false; if (p.w.fly) flyLand(p, r); else if (r.out) { floatText(Math.max(60, Math.min(W - 60, r.x)), Math.min(H - 60, Math.max(80, r.y)), 'Trượt', '#cfc3e0'); S.focus = { x: Math.max(0, Math.min(W, r.x)), y: Math.min(H - 100, Math.max(100, r.y)) }; } else explode(r.x, r.y, p.w, p.owner, r); } } }
+      for (const p of S.projs) if (p.alive && p.delay <= 0) { p.trail.push({ x: p.x, y: p.y }); if (p.trail.length > 30) p.trail.shift();
+        const tr = p.tier || 0; if (!p.owner.isBoss && tr >= 2 && Math.random() < 0.15 + tr * 0.08) S.parts.push({ x: p.x + rnd(-6, 6), y: p.y + rnd(-6, 6), vx: rnd(-25, 25), vy: rnd(-25, 25), g: 0, life: 0.45, max: 0.45, c: tr >= 4 && Math.random() < 0.5 ? '#ffffff' : p.col || '#ffd36b', s: 1.5 + tr * 0.4 }); }
       if (S.projs.every((p) => !p.alive)) endAim(); break; }
     case 'settle': { S.settleT += dt; let moving = false;
       for (const hh of S.heroes) { if (hh.dead) continue; const g = groundAt(hh.x);
@@ -988,12 +1038,62 @@ function drawAim() {
   if (S.buff && S.buff.traj) { const pw = S.charging ? S.power : hh.lastPower ?? 50; const p = launch(hh, hh.angle, pw, shotW(SHOTS[S.weapon]), hh.facing, 0); c.fillStyle = 'rgba(159,220,255,.9)';
     for (let i = 0; i < 14 / DT; i++) { const r = physStep(p, DT); if (i % 14 === 0) { c.beginPath(); c.arc(p.x, p.y, 3, 0, 7); c.fill(); } if (r) { c.strokeStyle = '#9fdcff'; c.lineWidth = 2.5; c.beginPath(); c.arc(r.x, r.y, 14, 0, 7); c.stroke(); break; } } }
 }
+/* ---------- hình viên đạn: theo kiểu vũ khí, to dần theo bậc ---------- */
+function pOrb(c, z, col, tier, t) {
+  const g = c.createRadialGradient(0, 0, 0, 0, 0, z * 1.9); g.addColorStop(0, '#ffffff'); g.addColorStop(0.3, col); g.addColorStop(1, col + '00');
+  c.fillStyle = g; c.beginPath(); c.arc(0, 0, z * 1.9, 0, 7); c.fill();
+  c.fillStyle = '#fff'; c.beginPath(); c.arc(-z * 0.25, -z * 0.25, z * 0.45, 0, 7); c.fill();
+  for (let i = 0; i < Math.min(5, tier); i++) { const a = t * 6 + (i * Math.PI * 2) / Math.min(5, tier); c.fillStyle = i % 2 ? '#fff' : col; c.beginPath(); c.arc(Math.cos(a) * z * 1.5, Math.sin(a) * z * 1.5, z * 0.22, 0, 7); c.fill(); }
+}
+function pArrow(c, z, col, tier) {
+  c.strokeStyle = '#e8d6a8'; c.lineWidth = z * 0.32; c.lineCap = 'round'; c.beginPath(); c.moveTo(-z * 2.6, 0); c.lineTo(z * 1.2, 0); c.stroke();
+  c.fillStyle = shade(col, 0.4); for (const s of [-1, 1]) { c.beginPath(); c.moveTo(-z * 2.7, 0); c.lineTo(-z * 1.8, 0); c.lineTo(-z * 2.4, s * z * 0.8); c.lineTo(-z * 3.1, s * z * 0.8); c.closePath(); c.fill(); }
+  c.fillStyle = col; c.strokeStyle = OL; c.lineWidth = 1.5; c.beginPath(); c.moveTo(z * 2.3, 0); c.lineTo(z * 1.0, -z * 0.75); c.lineTo(z * 1.25, 0); c.lineTo(z * 1.0, z * 0.75); c.closePath(); c.fill(); c.stroke();
+  if (tier >= 3) { c.fillStyle = '#fff'; c.beginPath(); c.arc(z * 2.3, 0, z * 0.3, 0, 7); c.fill(); }
+}
+function pSpear(c, z, col, tier) {
+  c.strokeStyle = shade(col, -0.45); c.lineWidth = z * 0.38; c.lineCap = 'round'; c.beginPath(); c.moveTo(-z * 3, 0); c.lineTo(z * 1.2, 0); c.stroke();
+  c.fillStyle = shade(col, 0.15); c.strokeStyle = OL; c.lineWidth = 1.5; c.beginPath(); c.moveTo(z * 2.8, 0); c.lineTo(z * 1.4, -z * 0.7); c.lineTo(z * 0.9, 0); c.lineTo(z * 1.4, z * 0.7); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#fff'; c.beginPath(); c.moveTo(z * 2.6, 0); c.lineTo(z * 1.5, -z * 0.25); c.lineTo(z * 1.3, 0); c.closePath(); c.fill();
+  if (tier >= 2) { c.fillStyle = col; c.beginPath(); c.arc(z * 0.7, 0, z * 0.32, 0, 7); c.fill(); }
+}
+function pSlash(c, z, col, tier, t) {
+  c.rotate(t * 16); const R = z * 1.8;
+  const g = c.createLinearGradient(-R, 0, R, 0); g.addColorStop(0, col + '00'); g.addColorStop(0.5, col); g.addColorStop(1, '#ffffff');
+  c.fillStyle = g; c.beginPath(); c.arc(0, 0, R, -Math.PI * 0.85, Math.PI * 0.85); c.arc(-R * 0.35, 0, R * 0.78, Math.PI * 0.8, -Math.PI * 0.8, true); c.closePath(); c.fill();
+  c.fillStyle = '#fff'; c.beginPath(); c.arc(0, 0, z * 0.35, 0, 7); c.fill();
+  if (tier >= 3) { c.rotate(Math.PI); c.globalAlpha *= 0.6; c.fillStyle = g; c.beginPath(); c.arc(0, 0, R * 0.8, -Math.PI * 0.7, Math.PI * 0.7); c.arc(-R * 0.3, 0, R * 0.6, Math.PI * 0.65, -Math.PI * 0.65, true); c.closePath(); c.fill(); }
+}
+function pStar(c, z, col, tier, t) {
+  c.rotate(t * 7); const R = z * 1.6, n = tier >= 4 ? 6 : 5;
+  c.fillStyle = col; c.strokeStyle = OL; c.lineWidth = 1.5; c.beginPath();
+  for (let i = 0; i < n * 2; i++) { const r = i % 2 ? R * 0.45 : R, a = (i * Math.PI) / n - Math.PI / 2; i ? c.lineTo(Math.cos(a) * r, Math.sin(a) * r) : c.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+  c.closePath(); c.fill(); c.stroke(); c.fillStyle = '#fff'; c.beginPath(); c.arc(0, 0, z * 0.45, 0, 7); c.fill();
+}
+function pFeather(c, z) {
+  c.fillStyle = '#eafff6'; c.strokeStyle = '#4aa87a'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(z * 2.2, 0); c.quadraticCurveTo(0, -z * 1.3, -z * 2, -z * 0.2); c.quadraticCurveTo(0, z * 1.1, z * 2.2, 0); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(-z * 2.6, 0); c.lineTo(z * 2, 0); c.stroke();
+}
 function drawProjs() {
   const c = ctx;
-  for (const p of S.projs) { if (p.delay > 0) continue; const col = p.owner.isBoss ? '#ff5a5a' : p.col || '#ffd36b', big = p.w.ult || (p.owner.isBoss && p.w.r > 60) ? 11 : 7;
-    if (p.trail.length > 1) { c.save(); c.lineCap = 'round'; for (let i = 1; i < p.trail.length; i++) { c.strokeStyle = col; c.globalAlpha = (i / p.trail.length) * 0.55; c.lineWidth = big * (i / p.trail.length); c.beginPath(); c.moveTo(p.trail[i - 1].x, p.trail[i - 1].y); c.lineTo(p.trail[i].x, p.trail[i].y); c.stroke(); } c.restore(); }
+  for (const p of S.projs) { if (p.delay > 0) continue;
+    const boss = p.owner.isBoss, col = boss ? '#ff5a5a' : p.col || '#ffd36b', tier = p.tier || 0;
+    const z = boss ? (p.w.r > 60 ? 15 : 11) : (10 + tier * 1.4) * (p.w.ult ? 1.45 : 1);
+    if (p.trail.length > 1) { c.save(); c.lineCap = 'round'; for (let i = 1; i < p.trail.length; i++) { c.strokeStyle = col; c.globalAlpha = (i / p.trail.length) * (0.45 + tier * 0.05); c.lineWidth = z * 1.2 * (i / p.trail.length); c.beginPath(); c.moveTo(p.trail[i - 1].x, p.trail[i - 1].y); c.lineTo(p.trail[i].x, p.trail[i].y); c.stroke(); } c.restore(); }
     if (!p.alive) continue;
-    c.save(); c.shadowColor = col; c.shadowBlur = p.w.ult ? 24 : 14; c.fillStyle = col; c.beginPath(); c.arc(p.x, p.y, big, 0, 7); c.fill(); c.shadowBlur = 0; c.fillStyle = 'rgba(255,255,255,.75)'; c.beginPath(); c.arc(p.x - big * 0.3, p.y - big * 0.3, big * 0.35, 0, 7); c.fill(); c.restore(); }
+    const ang = Math.atan2(p.vy, p.vx), t = S.time;
+    c.save(); c.translate(p.x, p.y); c.shadowColor = col; c.shadowBlur = 12 + tier * 3 + (p.w.ult ? 12 : 0);
+    if (!boss && tier >= 4) { c.save(); c.strokeStyle = tier >= 5 ? '#ffd36b' : '#ffffff'; c.globalAlpha = 0.55 + Math.sin(t * 10) * 0.2; c.lineWidth = 2; c.beginPath(); c.arc(0, 0, z * (2.1 + Math.sin(t * 8) * 0.15), 0, 7); c.stroke(); c.restore(); }
+    if (boss) pOrb(c, z, col, 0, t);
+    else if (p.w.fly) { c.rotate(ang); pFeather(c, z); }
+    else switch (p.wt) {
+      case 'bow': c.rotate(ang); pArrow(c, z, col, tier); break;
+      case 'spear': c.rotate(ang); pSpear(c, z, col, tier); break;
+      case 'sword': pSlash(c, z, col, tier, t); break;
+      case 'scepter': pStar(c, z, col, tier, t); break;
+      default: pOrb(c, z, col, tier, t);
+    }
+    c.restore(); }
 }
 function drawFx() {
   const fx = S.th.fx; if (!fx) return; const c = ctx; c.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1035,7 +1135,7 @@ function drawMini() {
 
 /* =================== HUD =================== */
 const el = (id) => document.getElementById(id);
-const E = {}; ['stTxt', 'buffs', 'wFill', 'wVal', 'roundTxt', 'timer', 'clock', 'whoName', 'hpFill', 'shFill', 'hpTxt', 'enFill', 'enTxt', 'enMeter', 'angVal', 'needle', 'dialSvg', 'pVal', 'pLast', 'pFill', 'pMark', 'stFill', 'fireBtn', 'hudBot', 'me'].forEach((i) => (E[i] = el(i)));
+const E = {}; ['powPct', 'stTxt', 'buffs', 'wFill', 'wVal', 'roundTxt', 'timer', 'clock', 'whoName', 'hpFill', 'shFill', 'hpTxt', 'enFill', 'enTxt', 'enMeter', 'angVal', 'needle', 'dialSvg', 'pVal', 'pLast', 'pFill', 'pMark', 'stFill', 'fireBtn', 'hudBot', 'me'].forEach((i) => (E[i] = el(i)));
 function st(e, v) { if (e._v !== v) { e._v = v; e.textContent = v; } }
 function sw(e, v) { if (e._w !== v) { e._w = v; e.style.width = v; } }
 // Ô kỹ năng: 1 Đạn thường, 2 Tam liên, 4 Vật phẩm hỗ trợ; Tuyệt kỹ (3) là nút POW cạnh nút Bắn
@@ -1049,6 +1149,8 @@ for (const i of [0, 1, 3]) {
   const b = h('button', { type: 'button', class: 'sk', id: 'sk' + i }, ico, h('kbd', {}, i + 1), h('em', { class: 'cd' }));
   b.addEventListener('click', () => { ensureAudio(); selectWeapon(i); }); $('#skills').append(b); skBtns[i] = b;
 }
+const spBtns = SPECIALS.map((sp) => { const b = h('button', { type: 'button', class: 'spc', id: 'sp-' + sp.id, title: `${sp.d} · tốn ${sp.cost} NL (phím ${sp.key})` }, h('b', {}, sp.n), h('small', {}, sp.cost));
+  b.addEventListener('click', () => { ensureAudio(); toggleSpecial(sp.id); }); $('#specials').append(b); return b; });
 skBtns[2] = $('#sk2'); skBtns[2].addEventListener('click', () => { ensureAudio(); selectWeapon(2); });
 let teamEls = [];
 function buildTeamsHud() {
@@ -1068,7 +1170,7 @@ function updateHUD() {
   E.me.style.setProperty('--team', TEAMC[hh.team]); st(E.whoName, hh.name);
   sw(E.hpFill, Math.max(0, (hh.hp / hh.maxHp) * 100) + '%'); sw(E.shFill, (hh.shield ? Math.min(1, hh.shield / hh.maxHp) * 100 : 0) + '%');
   st(E.hpTxt, `${fmt(Math.max(0, hh.hp))} / ${fmt(hh.maxHp)}${hh.shield ? ` · giáp ${fmt(hh.shield)}` : ''}`);
-  sw(E.enFill, hh.energy + '%'); st(E.enTxt, `${Math.floor(hh.energy)}`); E.enMeter.classList.toggle('full', hh.energy >= 100);
+  const nl = S.state === 'aim' ? S.nl : NL_MAX; sw(E.enFill, nl + '%'); st(E.enTxt, `${nl} / ${NL_MAX}`);
   st(E.angVal, Math.round(hh.angle) + '°'); const a = (hh.angle * Math.PI) / 180; E.needle.setAttribute('x2', (40 + 32 * Math.cos(a)).toFixed(1)); E.needle.setAttribute('y2', (42 - 32 * Math.sin(a)).toFixed(1)); E.dialSvg.classList.toggle('flip', hh.facing < 0);
   st(E.pVal, `Lực ${Math.round(S.power)}`); st(E.pLast, hh.lastPower == null ? 'Lần trước: —' : `Lần trước: ${Math.round(hh.lastPower)}`); sw(E.pFill, S.power + '%');
   if (hh.lastPower != null) { E.pMark.hidden = false; E.pMark.style.left = hh.lastPower + '%'; } else E.pMark.hidden = true;
@@ -1079,7 +1181,8 @@ function updateHUD() {
   for (const i of [0, 1]) { const b = skBtns[i], sh = SHOTS[i], cd = i === 1 && hh.cd > 0 ? hh.cd : 0;
     b.title = `${sh.n} (phím ${i + 1}): ${sh.sub}`; st(b.children[2], cd ? String(cd) : ''); b.disabled = !!cd || !human; b.classList.toggle('sel', S.weapon === i && human); }
   const pb = skBtns[2], full = hh.energy >= 100;
-  pb.style.setProperty('--en', Math.floor(hh.energy) + '%'); pb.classList.toggle('ready', full); pb.disabled = !full || !human; pb.classList.toggle('sel', S.weapon === 2 && human);
+  pb.style.setProperty('--en', Math.floor(hh.energy) + '%'); st(E.powPct, Math.floor(hh.energy) + '%');
+  SPECIALS.forEach((sp, i) => { const b = spBtns[i], on = S.sp.has(sp.id); b.classList.toggle('sel', on); b.disabled = !human || (!on && sp.cost > S.nl); }); pb.classList.toggle('ready', full); pb.disabled = !full || !human; pb.classList.toggle('sel', S.weapon === 2 && human);
   pb.title = full ? `${SHOTS[2].n} (phím 3): ${SHOTS[2].sub}` : `${SHOTS[2].n}: cần 100% nộ (${Math.floor(hh.energy)}%)`;
   const sb = skBtns[3], s = hh.sup, k = s ? s.kind : '';
   if (sb._k !== k) { sb._k = k; const ic = sb.children[0]; ic.innerHTML = ''; if (s) ic.append(sprCanvas(`items/${SUP[s.kind].img}.webp`, 96)); }
@@ -1122,7 +1225,7 @@ function showResult(s, win, res, err) {
 
 /* =================== SOUND =================== */
 let AC = null, soundOn = true;
-function updSound() { $('#btnSoundL').textContent = `Âm thanh: ${soundOn ? 'Bật' : 'Tắt'}`; $('#sndWave').style.display = soundOn ? '' : 'none'; }
+function updSound() { try { if (soundOn) Music.resume(); else Music.stop(true); } catch (e) {} $('#btnSoundL').textContent = `Âm thanh: ${soundOn ? 'Bật' : 'Tắt'}`; $('#sndWave').style.display = soundOn ? '' : 'none'; }
 function ensureAudio() { try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) {} }
 function tone(f, d, type = 'sine', v = 0.12, slide = 0) { if (!AC || !soundOn) return; const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f * slide), t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + 0.02); }
 function noise(d, v, freq) { if (!AC || !soundOn) return; const t = AC.currentTime, len = Math.floor(AC.sampleRate * d), buf = AC.createBuffer(1, len, AC.sampleRate), ch = buf.getChannelData(0); for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len); const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = buf; f.type = 'lowpass'; f.frequency.value = freq; g.gain.value = v; s.connect(f).connect(g).connect(AC.destination); s.start(t); }
@@ -1137,6 +1240,63 @@ function sfx(k, r = 50) {
   else if (k === 'ok') { tone(660, 0.12, 'triangle', 0.07); setTimeout(() => tone(990, 0.25, 'triangle', 0.07), 110); }
   else if (k === 'bad') tone(200, 0.3, 'sawtooth', 0.06, 0.6);
 }
+
+/* =================== MUSIC =================== */
+// Nhạc nền tạo bằng Web Audio, mỗi bản đồ một bài (thang âm, nhịp, tiếng đàn khác nhau). Không cần file nhạc.
+let musicOn = lsGet('h2t-music') !== '0';
+const SCALES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10], hijaz: [0, 1, 4, 5, 7, 8, 10],
+  lydian: [0, 2, 4, 6, 7, 9, 11], mixo: [0, 2, 4, 5, 7, 9, 10], pmaj: [0, 2, 4, 7, 9], pmin: [0, 3, 5, 7, 10] };
+const SONGS = {
+  forest: { bpm: 100, root: 57, sc: 'major', prog: [0, 5, 3, 4], lead: 'triangle', drums: 1 },
+  desert: { bpm: 90, root: 52, sc: 'hijaz', prog: [0, 1, 0, 6], lead: 'square', drums: 1 },
+  snow: { bpm: 76, root: 62, sc: 'lydian', prog: [0, 4, 5, 3], lead: 'sine', bell: true, drums: 0 },
+  volcano: { bpm: 136, root: 45, sc: 'minor', prog: [0, 5, 6, 4], lead: 'sawtooth', drums: 2 },
+  ruins: { bpm: 84, root: 50, sc: 'dorian', prog: [0, 3, 6, 4], lead: 'triangle', drums: 1 },
+  sky: { bpm: 116, root: 60, sc: 'pmaj', prog: [0, 3, 4, 2], lead: 'triangle', bell: true, drums: 1 },
+  night: { bpm: 72, root: 55, sc: 'pmin', prog: [0, 3, 2, 4], lead: 'sine', drums: 0 },
+  canyon: { bpm: 104, root: 53, sc: 'mixo', prog: [0, 6, 3, 0], lead: 'square', drums: 1 },
+};
+const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+function seeded(str) { let a = 0; for (const ch of str) a = (a * 31 + ch.charCodeAt(0)) | 0; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+// Sinh bài: 8 ô nhịp × 8 nốt móc đơn, cấu trúc A A' B A cho dễ nhớ
+function composeSong(id, boss) {
+  const cfg = SONGS[id] || SONGS.forest, sc = SCALES[cfg.sc], rnd2 = seeded(id + (boss ? '!' : '')), L = sc.length;
+  const deg = (d) => cfg.root + sc[((d % L) + L) % L] + 12 * Math.floor(d / L);
+  const motif = () => { const out = []; let cur = 7 + Math.floor(rnd2() * 3); for (let i = 0; i < 16; i++) { const rest = rnd2() < (i % 2 ? 0.45 : 0.15); if (rest) { out.push(null); continue; } cur += [-2, -1, -1, 0, 1, 1, 2, 3][Math.floor(rnd2() * 8)]; cur = Math.max(4, Math.min(13, cur)); out.push({ d: cur, len: rnd2() < 0.3 ? 2 : 1 }); } return out; };
+  const A = motif(), B = motif(), A2 = A.map((n) => (n && rnd2() < 0.3 ? { ...n, d: n.d + (rnd2() < 0.5 ? 1 : -1) } : n));
+  const mel = [...A, ...A2, ...B, ...A], prog = [...cfg.prog, ...cfg.prog];
+  return { cfg: { ...cfg, bpm: cfg.bpm * (boss ? 1.12 : 1), drums: boss ? Math.max(1, cfg.drums) : cfg.drums }, mel, prog, deg };
+}
+const Music = {
+  song: null, id: null, timer: null, step: 0, next: 0, out: null, noise: null,
+  play(id, boss) {
+    this.id = id; this.boss = !!boss; if (!AC || !soundOn || !musicOn) { this.stop(true); return; }
+    if (this.timer && this.key === id + boss) return;
+    this.stop(true); this.key = id + boss; this.song = composeSong(id, boss); this.step = 0; this.next = AC.currentTime + 0.1;
+    this.out = AC.createGain(); this.out.gain.setValueAtTime(0.0001, AC.currentTime); this.out.gain.exponentialRampToValueAtTime(0.55, AC.currentTime + 1.2); this.out.connect(AC.destination);
+    if (!this.noise) { const len = AC.sampleRate * 0.2, buf = AC.createBuffer(1, len, AC.sampleRate), ch = buf.getChannelData(0); for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1; this.noise = buf; }
+    this.timer = setInterval(() => this.tick(), 40); this.tick();
+  },
+  stop(keep) { if (this.timer) clearInterval(this.timer); this.timer = null; this.key = null;
+    if (this.out && AC) { const o = this.out; o.gain.cancelScheduledValues(AC.currentTime); o.gain.setValueAtTime(Math.max(0.0001, o.gain.value), AC.currentTime); o.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 0.4); setTimeout(() => o.disconnect(), 600); }
+    this.out = null; if (!keep) this.id = null; },
+  resume() { if (this.id) this.play(this.id, this.boss); },
+  tick() { const sd = 60 / this.song.cfg.bpm / 2; while (this.next < AC.currentTime + 0.25) { this.at(this.step, this.next, sd); this.next += sd; this.step++; } },
+  note(t, midi, dur, type, vol) { const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = mtof(midi);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(this.out); o.start(t); o.stop(t + dur + 0.05); },
+  at(step, t, sd) {
+    const { cfg, mel, prog, deg } = this.song, i = step % 64, bar = Math.floor(i / 8), beat = i % 8, ch = prog[bar];
+    const n = mel[i]; if (n) { const lv = cfg.lead === 'sawtooth' || cfg.lead === 'square' ? 0.028 : 0.05; this.note(t, deg(n.d + ch % 3), sd * (n.len + 0.6), cfg.lead, lv); if (cfg.bell) this.note(t, deg(n.d + ch % 3) + 12, sd * 2.5, 'sine', 0.015); }
+    if (beat === 0) for (const k of [0, 2, 4]) this.note(t, deg(ch + k), sd * 7.5, 'triangle', 0.016);
+    if (beat === 0 || beat === 4 || (cfg.drums > 1 && beat % 2 === 0)) this.note(t, deg(ch) - 24, sd * 1.6, cfg.drums > 1 ? 'sawtooth' : 'sine', cfg.drums > 1 ? 0.03 : 0.07);
+    if (cfg.drums && (beat === 0 || beat === 4)) { const o = AC.createOscillator(), g = AC.createGain(); o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12); g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16); o.connect(g).connect(this.out); o.start(t); o.stop(t + 0.2); }
+    if (cfg.drums && (beat % 2 === 1 || cfg.drums > 1)) { const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = this.noise; f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(beat % 2 ? 0.05 : 0.025, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05); s.connect(f).connect(g).connect(this.out); s.start(t); s.stop(t + 0.06); }
+  },
+};
+function updMusic() { $('#btnMusicL').textContent = `Nhạc: ${musicOn ? 'Bật' : 'Tắt'}`; $('#musSlash').style.display = musicOn ? 'none' : ''; }
+function toggleMusic() { ensureAudio(); musicOn = !musicOn; lsSet('h2t-music', musicOn ? '1' : '0'); updMusic(); if (musicOn) Music.resume(); else Music.stop(true); }
+$('#btnMusicL').addEventListener('click', toggleMusic); $('#tMusic').addEventListener('click', toggleMusic); updMusic();
+document.addEventListener('visibilitychange', () => { if (document.hidden) Music.stop(true); else if (S && !$('#battle').hidden) Music.resume(); });
 
 /* =================== LOOP =================== */
 let last = performance.now();

@@ -9,6 +9,10 @@ Game bắn canh góc theo lượt (kiểu Gunny) chạy trên trình duyệt, c�
 - **Nâng cấp cần nguyên liệu và vàng.** Nguyên liệu rơi từ boss hoặc do admin tạo.
 - **Cửa hàng:** rương ngẫu nhiên và Tiệm vũ khí (chọn kiểu Trượng/Kiếm/Cung/Quyền Trượng/Thương, bậc Cơ bản → Huyền cấp).
 - **Giao diện trận đấu kiểu điện thoại:** vòng điều khiển tròn bên trái (giữa hiện góc bắn), ô kỹ năng/vật phẩm vuông, thước lực 0–100, thanh HP / TL (thể lực) / NL (nộ), nút POW (tuyệt kỹ) và nút Bắn tròn bên phải. Phím tắt: mũi tên/WASD, Space để bắn, 1–4 chọn kỹ năng.
+- **Kỹ năng đặc biệt (tốn NL, mỗi lượt có 100 NL):** +10% (10), +20% (20), +50% (40), x2 bắn 2 loạt mỗi loạt 70% (60), Bay theo viên đạn không gây sát thương (50), +1 viên mỗi viên 60% (30), +2 viên mỗi viên 45% (50). Phím 5 6 7 8 9 0 -.
+- **Đạn theo vũ khí:** Trượng bắn cầu phép, Cung bắn tên, Thương phóng giáo, Kiếm chém vòng cung, Quyền Trượng bắn sao; đạn to và sáng hơn theo bậc.
+- **Nhạc nền theo bản đồ:** tạo bằng Web Audio (không cần file nhạc), mỗi bản đồ một giai điệu, đánh boss nhịp nhanh hơn. Nút Nhạc ở sảnh và trong trận.
+- **Dây chuyền, vòng tay:** 5 kiểu mỗi loại (Ngọc Bội, Bùa Hộ Mệnh, Ngọc Trai, Tâm Ngọc, Nanh Thú; Kim Trạc, Chuỗi Hạt, Lắc Xích, Hộ Uyển, Lắc Bùa), icon vẽ bằng `tools/draw_icons.py`.
 - **8 bản đồ,** camera kéo được, phóng to/thu nhỏ, bản đồ thu nhỏ (minimap), chơi màn hình ngang trên điện thoại.
 
 ## Cấu trúc thư mục
@@ -27,7 +31,8 @@ h2t-shooting/
         ├── atlas.js     Toạ độ từng hình trong atlas
         └── *.webp       char, tier, armor, hat, ring, weapon, icons, use
 tools/
-└── pack_atlas.py    Gộp lại atlas khi thêm/sửa hình
+├── pack_atlas.py    Gộp lại atlas khi thêm/sửa hình
+└── draw_icons.py    Vẽ icon dây chuyền, vòng tay, nguyên liệu (Python + Pillow)
 ```
 
 ## Gói hình

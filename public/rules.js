@@ -24,9 +24,9 @@
     hat: { n: 'Nón', up: true, typed: true, base: { def: 22, hp: 120, agi: 6 } },
     armor: { n: 'Áo', up: true, typed: true, base: { hp: 240, def: 30 } },
     support: { n: 'Hỗ trợ', up: true, base: { agi: 16, hp: 90 } },
-    necklace: { n: 'Dây chuyền', up: false, base: { atk: 22, hp: 110, crit: 6 }, names: ['Dây Gỗ', 'Kim Ngọc Liên', 'Huyền Châu Liên', 'Địa Tâm Liên', 'Thiên Tinh Liên', 'Thần Ấn Liên'] },
+    necklace: { n: 'Dây chuyền', up: false, typed: true, base: { atk: 22, hp: 110, crit: 6 }, names: ['Dây Gỗ', 'Kim Ngọc Liên', 'Huyền Châu Liên', 'Địa Tâm Liên', 'Thiên Tinh Liên', 'Thần Ấn Liên'] },
     ring: { n: 'Nhẫn', up: false, typed: true, base: { crit: 24, atk: 16 } },
-    bracelet: { n: 'Vòng tay', up: false, base: { agi: 28, def: 14, hp: 60 }, names: ['Vòng Dây', 'Kim Xà Trạc', 'Huyền Phong Trạc', 'Địa Linh Trạc', 'Thiên Vân Trạc', 'Thần Phong Trạc'] },
+    bracelet: { n: 'Vòng tay', up: false, typed: true, base: { agi: 28, def: 14, hp: 60 }, names: ['Vòng Dây', 'Kim Xà Trạc', 'Huyền Phong Trạc', 'Địa Linh Trạc', 'Thiên Vân Trạc', 'Thần Phong Trạc'] },
   };
   // Kiểu trang bị (theo gói hình fantasy): mỗi ô có 5 kiểu, mỗi kiểu 6 bậc. Kiểu chỉ đổi ngoại hình và tên, không đổi chỉ số.
   const TSUF = ['Sơ Khai', 'Hổ Phách', 'Nguyệt Huyền', 'Địa Linh', 'Thiên Dực', 'Phượng Hoàng'];
@@ -41,7 +41,11 @@
     ring: { solitaire: { n: 'Nhẫn Ngọc', names: tn('Nhẫn Ngọc') }, signet: { n: 'Nhẫn Ấn', names: tn('Nhẫn Ấn') }, twist: { n: 'Nhẫn Xoắn', names: tn('Nhẫn Xoắn') },
       claw: { n: 'Nhẫn Long Trảo', names: tn('Nhẫn Long Trảo') }, crown: { n: 'Nhẫn Vương Miện', names: tn('Nhẫn Vương Miện') } },
   };
-  const DEFAULT_TYPE = { weapon: 'staff', hat: 'wizard', armor: 'robe', ring: 'solitaire' };
+  TYPES.necklace = { pendant: { n: 'Dây Ngọc Bội', names: tn('Dây Ngọc Bội') }, amulet: { n: 'Bùa Hộ Mệnh', names: tn('Bùa Hộ Mệnh') }, pearl: { n: 'Chuỗi Ngọc Trai', names: tn('Chuỗi Ngọc Trai') },
+    heart: { n: 'Mặt Dây Tâm Ngọc', names: tn('Mặt Dây Tâm Ngọc') }, fang: { n: 'Vòng Cổ Nanh Thú', names: tn('Vòng Cổ Nanh Thú') } };
+  TYPES.bracelet = { bangle: { n: 'Kim Trạc', names: tn('Kim Trạc') }, beads: { n: 'Chuỗi Hạt', names: tn('Chuỗi Hạt') }, chain: { n: 'Lắc Xích', names: tn('Lắc Xích') },
+    cuff: { n: 'Hộ Uyển', names: tn('Hộ Uyển') }, charm: { n: 'Lắc Bùa', names: tn('Lắc Bùa') } };
+  const DEFAULT_TYPE = { weapon: 'staff', hat: 'wizard', armor: 'robe', ring: 'solitaire', necklace: 'pendant', bracelet: 'bangle' };
   // Vật phẩm hỗ trợ: 6 loại, mỗi loại có hình riêng trong assets/items và assets/use
   const SUP = {
     heal: { n: 'Bình Hồi Phục', img: 'heal_potion', names: ['Bình Hồi Phục', 'Bình Hồi Phục Hoàng', 'Bình Hồi Phục Huyền', 'Bình Hồi Phục Địa', 'Bình Hồi Phục Thiên', 'Bình Hồi Phục Tuyệt'] },
@@ -202,21 +206,26 @@
   function pay(p, c) { for (const k in c) { if (k === 'gold') p.gold -= c[k]; else p.mats[k] -= c[k]; } }
 
   /* ---------- rewards ---------- */
+  // Vàng/đá nhận được sau mỗi trận (t = bậc đối thủ hoặc bậc boss)
+  const REWARD = {
+    pvpWin: (t) => ({ gold: 300 + t * 220, stone: 4 + t * 2 }), pvpLose: (t) => ({ gold: 120 + t * 60, stone: 2 }),
+    bossWin: (t) => ({ gold: 600 + t * 600, stone: 8 + t * 6 }), bossLose: (t) => ({ gold: 200 + t * 100, stone: 3 }),
+  };
   function rewardsFor(pend, win, rng) {
     const out = { mats: {}, items: [] };
     const add = (k, v) => { out.mats[k] = (out.mats[k] || 0) + v; };
     if (pend.mode === 'boss') {
       const b = BOSSES[pend.boss];
       if (win) {
-        add('gold', 200 + b.t * 250); add('stone', 8 + b.t * 6 + Math.floor(rng() * 6));
+        const r = REWARD.bossWin(b.t); add('gold', r.gold); add('stone', r.stone + Math.floor(rng() * 6));
         add('t' + Math.min(5, b.t + 1), 1 + (rng() < 0.35 ? 1 : 0));
         if (rng() < 0.4) add('luck', 1);
         if (rng() < 0.25) add('guard', 1);
         if (rng() < 0.4) out.items.push(mkItem(pick(SLOT_ORDER, rng), b.t, 0, 0.92 + rng() * 0.23, null, rng));
-      } else { add('gold', 50); add('stone', 2); }
+      } else { const r = REWARD.bossLose(b.t); add('gold', r.gold); add('stone', r.stone); }
     } else if (pend.opp === 'bot') {
-      if (win) { add('gold', 100 + pend.tier * 80); add('stone', 3 + pend.tier * 2); if (rng() < 0.15) add('luck', 1); }
-      else { add('gold', 30); add('stone', 1); }
+      if (win) { const r = REWARD.pvpWin(pend.tier); add('gold', r.gold); add('stone', r.stone); if (rng() < 0.15) add('luck', 1); }
+      else { const r = REWARD.pvpLose(pend.tier); add('gold', r.gold); add('stone', r.stone); }
     }
     return out;
   }
@@ -286,8 +295,10 @@
         p.pending = null;
         if (d.forfeit) { return { ok: true, rewards: { mats: {}, items: [] }, note: 'Bỏ trận, không có phần thưởng' }; }
         let win = !!d.win, note = null;
-        if (win && now - pend.startedAt < MIN_WIN_MS) { win = false; note = 'Trận kết thúc quá nhanh, không được tính thắng'; }
-        const rw = rewardsFor(pend, win, rng); addMats(p, rw.mats);
+        const short = now - pend.startedAt < MIN_WIN_MS;
+        if (win && short) { win = false; note = 'Trận kết thúc quá nhanh, không được tính thắng'; }
+        // Thua quá nhanh cũng không có thưởng tham gia (chống mở trận rồi thoát ngay để lấy vàng)
+        const rw = short ? { mats: {}, items: [] } : rewardsFor(pend, win, rng); addMats(p, rw.mats);
         const notes = []; for (const it of rw.items) { const n = addItem(p, it); if (n) notes.push(n); }
         if (pend.mode === 'boss' && win) p.rec.boss[BOSSES[pend.boss].t] = (p.rec.boss[BOSSES[pend.boss].t] || 0) + 1;
         if (pend.mode === 'pvp' && pend.opp === 'bot') { if (win) p.rec.wins++; else p.rec.losses++; }
@@ -307,7 +318,7 @@
     return { ok: true, notes };
   }
 
-  return { TIERS, STATS, STATN, BASE, SLOT_ORDER, SLOTS, SUP, SUP_KINDS, SUP_CD, TYPES, DEFAULT_TYPE, typeName, needsMigrate, MATS, LV_RATE, BREAK_RATE, LUCK_BONUS, INV_CAP, START_GOLD, SHOTS, BOSSES, MAPS, SHOP, WEAPON_SHOP, MIN_WIN_MS,
+  return { TIERS, STATS, STATN, BASE, SLOT_ORDER, SLOTS, SUP, SUP_KINDS, SUP_CD, TYPES, DEFAULT_TYPE, typeName, needsMigrate, MATS, LV_RATE, BREAK_RATE, LUCK_BONUS, INV_CAP, START_GOLD, SHOTS, BOSSES, MAPS, SHOP, WEAPON_SHOP, REWARD, MIN_WIN_MS,
     lvCost, breakCost, mkItem, itemName, itemStats, supPower, supDesc, statLine, totalStats, powerOf, red, derived, genSet, refStats, bossStats,
     LOOK, DEFAULT_LOOK, cleanLook, randomLook,
     newProfile, validProfile, migrate, itemById, isEquipped, equippedItems, looksOf, salvageValue, forgeInfo, canPay, have, apply, adminGrant, fmt };
