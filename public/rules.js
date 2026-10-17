@@ -10,23 +10,23 @@
   const TIERS = [
     { n: 'Cơ bản', c: '#c3bad0', m: 1 },
     { n: 'Hoàng cấp', c: '#f0c94a', m: 1.8 },
-    { n: 'Huyền cấp', c: '#a77bff', m: 3 },
-    { n: 'Địa cấp', c: '#e08a3c', m: 4.6 },
-    { n: 'Thiên cấp', c: '#49c6ff', m: 7 },
-    { n: 'Tuyệt cấp', c: '#ff4d6d', m: 11 },
+    { n: 'Huyền cấp', c: '#a77bff', m: 3.2 },
+    { n: 'Địa cấp', c: '#e08a3c', m: 5.7 },
+    { n: 'Thiên cấp', c: '#49c6ff', m: 10 },
+    { n: 'Tuyệt cấp', c: '#ff4d6d', m: 17.6 },
   ];
-  const STATS = [['atk', 'Tấn công'], ['def', 'Phòng thủ'], ['hp', 'Sinh lực'], ['crit', 'Chí mạng'], ['agi', 'Nhanh nhẹn']];
+  const STATS = [['atk', 'Tấn công'], ['def', 'Phòng thủ'], ['hp', 'Sinh lực'], ['crit', 'Chí mạng'], ['agi', 'Nhanh nhẹn'], ['luk', 'May mắn']];
   const STATN = Object.fromEntries(STATS);
-  const BASE = { atk: 100, def: 40, hp: 1000, crit: 20, agi: 30 };
+  const BASE = { atk: 100, def: 40, hp: 1000, crit: 20, agi: 30, luk: 10 };
   const SLOT_ORDER = ['weapon', 'hat', 'armor', 'support', 'necklace', 'ring', 'bracelet'];
   const SLOTS = {
-    weapon: { n: 'Vũ khí', up: true, typed: true, base: { atk: 40, crit: 12 } },
+    weapon: { n: 'Vũ khí', up: true, typed: true, base: { atk: 40, crit: 12, luk: 6 } },
     hat: { n: 'Nón', up: true, typed: true, base: { def: 22, hp: 120, agi: 6 } },
     armor: { n: 'Áo', up: true, typed: true, base: { hp: 240, def: 30 } },
     support: { n: 'Hỗ trợ', up: true, base: { agi: 16, hp: 90 } },
-    necklace: { n: 'Dây chuyền', up: false, typed: true, base: { atk: 22, hp: 110, crit: 6 }, names: ['Dây Gỗ', 'Kim Ngọc Liên', 'Huyền Châu Liên', 'Địa Tâm Liên', 'Thiên Tinh Liên', 'Thần Ấn Liên'] },
-    ring: { n: 'Nhẫn', up: false, typed: true, base: { crit: 24, atk: 16 } },
-    bracelet: { n: 'Vòng tay', up: false, typed: true, base: { agi: 28, def: 14, hp: 60 }, names: ['Vòng Dây', 'Kim Xà Trạc', 'Huyền Phong Trạc', 'Địa Linh Trạc', 'Thiên Vân Trạc', 'Thần Phong Trạc'] },
+    necklace: { n: 'Dây chuyền', up: false, typed: true, base: { atk: 22, hp: 110, crit: 6, luk: 16 }, names: ['Dây Gỗ', 'Kim Ngọc Liên', 'Huyền Châu Liên', 'Địa Tâm Liên', 'Thiên Tinh Liên', 'Thần Ấn Liên'] },
+    ring: { n: 'Nhẫn', up: false, typed: true, base: { crit: 24, atk: 16, luk: 20 } },
+    bracelet: { n: 'Vòng tay', up: false, typed: true, base: { agi: 28, def: 14, hp: 60, luk: 12 }, names: ['Vòng Dây', 'Kim Xà Trạc', 'Huyền Phong Trạc', 'Địa Linh Trạc', 'Thiên Vân Trạc', 'Thần Phong Trạc'] },
   };
   // Kiểu trang bị (theo gói hình fantasy): mỗi ô có 5 kiểu, mỗi kiểu 6 bậc. Kiểu chỉ đổi ngoại hình và tên, không đổi chỉ số.
   const TSUF = ['Sơ Khai', 'Hổ Phách', 'Nguyệt Huyền', 'Địa Linh', 'Thiên Dực', 'Phượng Hoàng'];
@@ -111,10 +111,13 @@
     return SLOTS[it.slot].names[it.tier];
   }
   function typeName(it) { return it.slot === 'support' ? (SUP[it.kind] || SUP.heal).n : TYPES[it.slot] ? (TYPES[it.slot][it.type] || {}).n : SLOTS[it.slot].n; }
-  function itemStats(it) { const o = {}, b = SLOTS[it.slot].base, m = TIERS[it.tier].m * (1 + 0.12 * it.lvl) * it.roll; for (const k in b) o[k] = Math.round(b[k] * m); return o; }
+  // Cường hoá: mỗi level +25% chỉ số của món (Lv3 = +75%). Hệ số bậc được chọn để đột phá lên bậc mới (Lv0) vẫn mạnh hơn Lv3 bậc cũ.
+  const LV_BONUS = 0.25;
+  const lvMul = (lvl) => 1 + LV_BONUS * (lvl || 0);
+  function itemStats(it) { const o = {}, b = SLOTS[it.slot].base, m = TIERS[it.tier].m * lvMul(it.lvl) * it.roll; for (const k in b) o[k] = Math.round(b[k] * m); return o; }
   // Sức mạnh kỹ năng: hồi máu/giáp tính theo điểm, các loại còn lại tính theo %
   function supPower(it) {
-    const m = TIERS[it.tier].m * (1 + 0.12 * it.lvl) * it.roll;
+    const m = TIERS[it.tier].m * lvMul(it.lvl) * it.roll;
     switch (it.kind) {
       case 'heal': return Math.round(150 * m);
       case 'shield': return Math.round(200 * m);
@@ -139,9 +142,10 @@
   }
   function statLine(st) { return Object.entries(st).map(([k, v]) => `${STATN[k]} ${fmt(v)}`).join(' · '); }
   function totalStats(items) { const o = { ...BASE }; for (const it of items) { const s = itemStats(it); for (const k in s) o[k] += s[k]; } return o; }
-  const powerOf = (st) => Math.round(st.atk * 2 + st.def * 1.6 + st.hp * 0.25 + st.crit * 1.8 + st.agi * 1.4);
+  const powerOf = (st) => Math.round(st.atk * 2 + st.def * 1.6 + st.hp * 0.25 + st.crit * 1.8 + st.agi * 1.4 + (st.luk || 0) * 1.5);
   const red = (def) => def / (def + 500);
-  function derived(st) { return { crit: Math.min(0.6, st.crit / (st.crit + 400)), dodge: st.agi / (st.agi + 2500), move: Math.min(280, 120 + st.agi * 0.2), reduce: red(st.def) }; }
+  // heavy: tỉ lệ Trọng thương (sát thương ×2) theo chỉ số May mắn, tối đa 35%
+  function derived(st) { return { heavy: Math.min(0.35, (st.luk || 0) / ((st.luk || 0) + 600)), crit: Math.min(0.6, st.crit / (st.crit + 400)), dodge: st.agi / (st.agi + 2500), move: Math.min(280, 120 + st.agi * 0.2), reduce: red(st.def) }; }
   function genSet(tier, rng) { rng = rng || Math.random; return SLOT_ORDER.map((s) => mkItem(s, tier, Math.floor(rng() * 3), 0.94 + rng() * 0.16, null, rng)); }
   const refCache = {};
   function refStats(t) { return refCache[t] || (refCache[t] = totalStats(SLOT_ORDER.map((s) => mkItem(s, t, 1, 1, 'heal')))); }
@@ -304,7 +308,7 @@
           pend.boss = clampInt(d.boss, 0, 5); pend.size = clampInt(d.size, 2, 4);
           const b = BOSSES[pend.boss]; out.boss = pend.boss; out.size = pend.size; out.bossStats = bossStats(b, pend.size); out.map = b.map;
         } else {
-          pend.size = clampInt(d.size, 1, 2); pend.tier = clampInt(d.tier, 0, 5); pend.opp = ['p2', 'online'].includes(d.opp) ? d.opp : 'bot';
+          pend.size = clampInt(d.size, 1, 4); pend.tier = clampInt(d.tier, 0, 5); pend.opp = ['p2', 'online'].includes(d.opp) ? d.opp : 'bot';
           out.size = pend.size; out.tier = pend.tier; out.opp = pend.opp; out.diff = ['easy', 'normal', 'hard'].includes(d.diff) ? d.diff : 'normal';
           out.map = MAPS.some((m) => m.id === d.map) ? d.map : 'forest';
           out.enemies = Array.from({ length: pend.size }, () => genSet(pend.tier, rng));
@@ -339,7 +343,7 @@
     return { ok: true, notes };
   }
 
-  return { TIERS, STATS, STATN, BASE, SLOT_ORDER, SLOTS, SUP, SUP_KINDS, SUP_CD, TYPES, DEFAULT_TYPE, typeName, needsMigrate, MATS, LV_RATE, BREAK_RATE, LUCK_BONUS, INV_CAP, START_GOLD, SHOTS, BOSSES, MAPS, SHOP, WEAPON_SHOP, MAT_SHOP, sellValue, REWARD, MIN_WIN_MS,
+  return { LV_BONUS, lvMul, TIERS, STATS, STATN, BASE, SLOT_ORDER, SLOTS, SUP, SUP_KINDS, SUP_CD, TYPES, DEFAULT_TYPE, typeName, needsMigrate, MATS, LV_RATE, BREAK_RATE, LUCK_BONUS, INV_CAP, START_GOLD, SHOTS, BOSSES, MAPS, SHOP, WEAPON_SHOP, MAT_SHOP, sellValue, REWARD, MIN_WIN_MS,
     lvCost, breakCost, mkItem, itemName, itemStats, supPower, supDesc, statLine, totalStats, powerOf, red, derived, genSet, refStats, bossStats,
     LOOK, DEFAULT_LOOK, cleanLook, randomLook,
     newProfile, validProfile, migrate, itemById, isEquipped, equippedItems, looksOf, salvageValue, forgeInfo, canPay, have, apply, adminGrant, fmt };

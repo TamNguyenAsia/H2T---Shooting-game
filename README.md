@@ -2,13 +2,15 @@
 
 Game bắn canh góc theo lượt (kiểu Gunny) chạy trên trình duyệt, có tài khoản và cơ sở dữ liệu PostgreSQL.
 
-- **Hai chế độ:** Đấu đội (1v1, 2v2 với máy hoặc 2 người cùng máy) và Đánh boss (2–4 người, 6 boss theo 6 bậc).
+- **Hai chế độ:** Đấu đội (1v1, 2v2, 3v3, 4v4 với máy, 2 người cùng máy hoặc online) và Đánh boss (2–4 người, 6 boss theo 6 bậc).
 - **Nhân vật như nhau, khác nhau ở trang bị:** mọi người chơi là pháp sư Sylva; nón, áo, vũ khí, nhẫn hiện trực tiếp lên nhân vật (5 kiểu × 6 bậc mỗi ô), thêm vật phẩm hỗ trợ, dây chuyền, vòng tay.
 - **6 vật phẩm hỗ trợ:** Bình Hồi Phục, Khiên Pha Lê, Đá Rune Lửa (tăng sát thương, nổ rộng), Bom Băng Giá (đóng băng mục tiêu 1 lượt, boss kháng), Lông Vũ Gió (hiện đường đạn, bỏ qua gió, hồi thể lực), Tiên Dược Vàng (tăng nộ).
 - **6 bậc trang bị:** Cơ bản → Hoàng cấp → Huyền cấp → Địa cấp → Thiên cấp → Tuyệt cấp. Mỗi bậc phải nâng đủ 3 level, tỉ lệ thành công giảm dần.
 - **Nâng cấp cần nguyên liệu và vàng.** Nguyên liệu rơi từ boss hoặc do admin tạo.
 - **Cửa hàng:** rương ngẫu nhiên và Tiệm vũ khí (chọn kiểu Trượng/Kiếm/Cung/Quyền Trượng/Thương, bậc Cơ bản → Huyền cấp).
 - **Giao diện trận đấu kiểu điện thoại:** vòng điều khiển tròn bên trái (giữa hiện góc bắn), ô kỹ năng/vật phẩm vuông, thước lực 0–100, thanh HP / TL (thể lực) / NL (nộ), nút POW (tuyệt kỹ) và nút Bắn tròn bên phải. Phím tắt: mũi tên/WASD, Space để bắn, 1–4 chọn kỹ năng.
+- **Kỹ năng đặc biệt cộng dồn** (bấm nhiều lần để chồng, tối đa thêm 4 viên; x2 và Bay bấm lại để bỏ; nút ↺ hoặc phím Backspace huỷ hết, hoàn NL).
+- **Trọng thương:** chỉ số mới **May mắn** (có trên Vũ khí, Dây chuyền, Nhẫn, Vòng tay) cho tỉ lệ gây Trọng thương ×2 sát thương, tối đa 35%. Trong trận máu và sát thương hiển thị ×100.
 - **Kỹ năng đặc biệt (tốn NL, mỗi lượt có 100 NL):** +10% (10), +20% (20), +50% (40), x2 bắn 2 loạt mỗi loạt 70% (60), Bay theo viên đạn không gây sát thương (50), +1 viên mỗi viên 60% (30), +2 viên mỗi viên 45% (50). Phím 5 6 7 8 9 0 -.
 - **Đạn theo vũ khí:** Trượng bắn cầu phép, Cung bắn tên, Thương phóng giáo, Kiếm chém vòng cung, Quyền Trượng bắn sao; đạn to và sáng hơn theo bậc.
 - **Nhạc nền theo bản đồ:** tạo bằng Web Audio (không cần file nhạc), mỗi bản đồ một giai điệu, đánh boss nhịp nhanh hơn. Nút Nhạc ở sảnh và trong trận.

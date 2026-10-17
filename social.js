@@ -135,7 +135,7 @@ module.exports = function attachSocial(server, { readToken, store, R, rng }) {
       case 'roomCreate': {
         if (r) leaveRoom(uid);
         const mode = msg.mode === 'boss' ? 'boss' : 'pvp';
-        const room = { id: 'r' + roomSeq++, name: clean(msg.name, 30) || `Phòng của ${u.name}`, host: uid, mode, size: msg.size === 1 ? 1 : 2,
+        const room = { id: 'r' + roomSeq++, name: clean(msg.name, 30) || `Phòng của ${u.name}`, host: uid, mode, size: [1, 2, 3, 4].includes(msg.size) ? msg.size : 2,
           boss: Math.max(0, Math.min(5, msg.boss | 0)), map: R.MAPS.some((m) => m.id === msg.map) ? msg.map : 'forest', diff: 'normal', status: 'lobby', members: [], chat: [], battle: null };
         rooms.set(room.id, room); joinRoom(uid, room); return;
       }
@@ -150,12 +150,12 @@ module.exports = function attachSocial(server, { readToken, store, R, rng }) {
       case 'roomSet': {
         if (!r || r.host !== uid || r.status !== 'lobby') return;
         if (msg.mode === 'boss' || msg.mode === 'pvp') r.mode = msg.mode;
-        if (msg.size === 1 || msg.size === 2) r.size = msg.size;
+        if ([1, 2, 3, 4].includes(msg.size)) r.size = msg.size;
         if (msg.boss != null) r.boss = Math.max(0, Math.min(5, msg.boss | 0));
         if (R.MAPS.some((m) => m.id === msg.map)) r.map = msg.map;
         if (['easy', 'normal', 'hard'].includes(msg.diff)) r.diff = msg.diff;
         if (msg.name) r.name = clean(msg.name, 30) || r.name;
-        if (r.members.length > cap(r)) { r.mode = 'pvp'; r.size = 2; }
+        if (r.members.length > cap(r)) { r.mode = 'pvp'; r.size = Math.max(2, Math.ceil(r.members.length / 2)); }
         fixTeams(r); r.members.forEach((m) => (m.ready = false)); pushRoom(r); broadcastLobby(); return;
       }
       case 'roomKick': {
