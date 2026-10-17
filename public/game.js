@@ -679,7 +679,8 @@ $('#btnSoundL').addEventListener('click', () => { ensureAudio(); soundOn = !soun
 
 /* =================== MAPS =================== */
 const POWER_SPEED = 30; // tốc độ thanh lực (đơn vị %/giây); bản đầu 60, bản trước 42
-const W = 2400, H = 1100, G = 420, WIND_A = 10, HR = 22, DT = 1 / 240, SPEED = 1.7, TURN_TIME = 25, VEL = 10;
+const WIND_MAX = 5; // gió từ -5 đến 5 (trước đây ±10)
+const W = 2400, H = 1100, G = 420, WIND_A = 9, HR = 22, DT = 1 / 240, SPEED = 1.7, TURN_TIME = 25, VEL = 10;
 const THEMES = {
   forest: { sky: ['#24467a', '#6f9fd0', '#f3d9a8'], sun: { x: 0.75, y: 0.22, c: '#fff3c4' }, far: '#4a6a92', near: '#3d6b56', g: ['#6a4a2e', '#4a321f', '#24170e'], top: '#5fa83e', hi: '#a9e06a', abyss: 'water', deco: 'tree', fx: 'leaf',
     gen: (x, r) => H * 0.72 + Math.sin(x * 0.003 + r[0]) * 50 + Math.sin(x * 0.009 + r[1]) * 24 + Math.sin(x * 0.023 + r[2]) * 8 },
@@ -824,7 +825,7 @@ function nextTurn() {
   }
 }
 function beginTurn(hh) {
-  S.turn++; S.cur = hh; S.wind = Math.round((Math.random() * 2 - 1) * 10);
+  S.turn++; S.cur = hh; S.wind = Math.round((Math.random() * 2 - 1) * WIND_MAX); S.projs = [];
   hh.cd = Math.max(0, hh.cd - 1); hh.supCd = Math.max(0, hh.supCd - 1); hh.energy = Math.min(100, hh.energy + 20);
   S.stamina = hh.move; S.timer = TURN_TIME; S.weapon = 0; S.power = 0; S.pdir = 1; S.charging = false; S.buff = null; S.walkTo = null; S.sp = new Set(); S.nl = NL_MAX; S.spDmg = 0;
   S.state = 'aim'; S.bot = { phase: 'wait', at: S.time + 0.9 }; cam.follow = true;
@@ -832,7 +833,7 @@ function beginTurn(hh) {
   drawPortrait($('#whoPic'), hh.L); sfx('turn');
 }
 function beginBossTurn() {
-  const b = S.boss; S.turn++; S.cur = b; S.wind = Math.round((Math.random() * 2 - 1) * 10); cam.follow = true;
+  const b = S.boss; S.turn++; S.cur = b; S.wind = Math.round((Math.random() * 2 - 1) * WIND_MAX); S.projs = []; cam.follow = true;
   if (!b.enraged && b.hp < b.maxHp * 0.4) { b.enraged = true; feed(`${b.name} nổi giận! Sát thương tăng mạnh`, '#ff6b7d'); }
   const seq = ['cannon', 'rain', 'cannon', 'quake']; b.move = seq[b.step++ % seq.length];
   banner(b.name, { cannon: 'Đại pháo', rain: 'Mưa thiên thạch', quake: 'Địa chấn' }[b.move], '#ff6b7d'); S.state = 'bossPrep'; S.prepT = 1.2;
@@ -977,9 +978,9 @@ function applyHit(src, tgt, mul) {
   const dodge = !tgt.isBoss && Math.random() < tgt.dodge; if (dodge) dmg *= 0.5;
   dmg = Math.max(1, Math.round(dmg));
   const ab = Math.min(tgt.shield || 0, dmg); if (ab) tgt.shield -= ab; tgt.hp -= dmg - ab; tgt.hurt = 0.5;
-  src.stats.dmg += dmg; if (!src.isBoss) src.energy = Math.min(100, src.energy + 5); if (!tgt.isBoss) tgt.energy = Math.min(100, tgt.energy + 8);
+  const foe = src.team !== tgt.team; if (foe) src.stats.dmg += dmg; if (!src.isBoss && foe) src.energy = Math.min(100, src.energy + 5); if (!tgt.isBoss) tgt.energy = Math.min(100, tgt.energy + 8);
   if (tgt.hp <= 0 && !tgt.dead) kill(tgt, src);
-  if (src === S.cur && S.buff && S.buff.frost && !tgt.dead) { if (tgt.isBoss) floatText(tgt.x, tgt.y - 250, 'Kháng băng', '#bfe9ff'); else { tgt.frozen = 1; burst(tgt.x, tgt.y - HIT_Y, 'frost', 18); } }
+  if (src === S.cur && S.buff && S.buff.frost && !tgt.dead && tgt.team !== src.team) { if (tgt.isBoss) floatText(tgt.x, tgt.y - 250, 'Kháng băng', '#bfe9ff'); else { tgt.frozen = 1; burst(tgt.x, tgt.y - HIT_Y, 'frost', 18); } }
   return { dmg, txt: (crit ? 'Chí mạng ' : '') + (dodge ? 'Né ' : '') + '-' + fmt(dmg), col: crit ? '#ff9a3c' : dodge ? '#cfe7ff' : '#ffd36b' };
 }
 function kill(tgt, src) {
@@ -991,10 +992,11 @@ function kill(tgt, src) {
 function explode(x, y, w, owner, hit) {
   carve(x, y, w.r * 0.75 * (w.crater || 1)); renderTerrain(); S.focus = { x, y };
   let hitAny = false;
-  for (const hh of S.heroes) { if (hh.dead || hh.team === owner.team) continue;
+  // Nổ trúng ai cũng mất máu, kể cả chính mình và đồng đội
+  for (const hh of S.heroes) { if (hh.dead) continue;
     const d = Math.hypot(hh.x - x, hh.y - HIT_Y - y), reach = w.r + HR; if (d >= reach) continue;
     let f = 1 - (0.55 * Math.max(0, d - HR * 0.3)) / w.r; if (hit.hero === hh) f *= 1.1;
-    const v = applyHit(owner, hh, w.mul * f); floatText(hh.x, hh.y - 112, v.txt, v.col); hitAny = true; }
+    const v = applyHit(owner, hh, w.mul * f); floatText(hh.x, hh.y - 112, v.txt, hh.team === owner.team ? '#ff8a8a' : v.col); if (hh.team !== owner.team) hitAny = true; }
   const b = S.boss;
   if (b && !b.dead && owner.team === 0) { const d = hit.boss ? 0 : Math.max(0, Math.hypot(b.x - x, b.y - 96 - y) - b.r); if (d < w.r) { const f = (1 - (0.5 * d) / w.r) * (hit.boss ? 1.1 : 1); const v = applyHit(owner, b, w.mul * f); floatText(b.x + rnd(-40, 40), b.y - 210, v.txt, v.col); hitAny = true; } }
   if (hitAny) { owner.stats.hits++; if (!owner.isBoss) owner.energy = Math.min(100, owner.energy + 10); }
@@ -1106,6 +1108,7 @@ function camTarget() {
 }
 function update(dt) {
   S.time += dt;
+  for (const p of S.projs) if (!p.alive && p.trail.length) p.trail.splice(0, 2); // vệt đạn mờ dần rồi biến mất
   for (const c of S.clouds) { c.x += (S.wind * 8 + (S.wind >= 0 ? 5 : -5)) * dt * (0.6 + c.s * 0.4); if (c.x > W + 300) c.x = -300; if (c.x < -300) c.x = W + 300; }
   for (const p of S.parts) { p.life -= dt; if (p.type === 'ring') { p.r += (p.max - p.r) * Math.min(1, dt * 10); continue; } p.vy += (p.g || 0) * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.985; }
   S.parts = S.parts.filter((p) => p.life > 0); for (const f of S.floats) { f.life -= dt; f.y -= 32 * dt; } S.floats = S.floats.filter((f) => f.life > 0);
@@ -1338,7 +1341,8 @@ const spBtns = SPECIALS.map((sp) => { const b = h('button', { type: 'button', cl
   b.addEventListener('click', () => { ensureAudio(); toggleSpecial(sp.id); }); $('#specials').append(b); return b; });
 skBtns[2] = $('#sk2'); skBtns[2].addEventListener('click', () => { ensureAudio(); selectWeapon(2); });
 let teamEls = [];
-function buildTeamsHud() {
+function buildTeamsHud() { return; /* đã bỏ thanh máu đội */ }
+function buildTeamsHudOld() {
   const box = $('#teams'); box.innerHTML = ''; teamEls = [];
   const rows = S.mode === 'boss' ? [['red', 'Đội của bạn'], ['boss', S.boss.name]] : [['red', TEAMN[0]], ['blue', TEAMN[1]]];
   for (const [cls, name] of rows) { const fill = h('i'), num = h('span'); box.append(h('div', { class: 'tb ' + cls }, h('div', { class: 'tl' }, h('b', {}, name), num), h('div', { class: 'bar' }, fill))); teamEls.push({ fill, num }); }
@@ -1346,8 +1350,8 @@ function buildTeamsHud() {
 function updateHUD() {
   const sum = (t) => { const a = S.heroes.filter((x) => x.team === t); return [a.reduce((s, x) => s + Math.max(0, x.hp), 0), a.reduce((s, x) => s + x.maxHp, 0)]; };
   const vals = [sum(0), S.boss ? [Math.max(0, S.boss.hp), S.boss.maxHp] : sum(1)];
-  vals.forEach(([v, m], i) => { st(teamEls[i].num, `${fmt(v)} / ${fmt(m)}`); sw(teamEls[i].fill, (v / m) * 100 + '%'); });
-  const w = S.wind, pct = (Math.abs(w) / 10) * 50; if (E.wFill._wind !== w) { E.wFill._wind = w; E.wFill.style.left = (w >= 0 ? 50 : 50 - pct) + '%'; E.wFill.style.width = pct + '%'; }
+  if (teamEls.length) vals.forEach(([v, m], i) => { st(teamEls[i].num, `${fmt(v)} / ${fmt(m)}`); sw(teamEls[i].fill, (v / m) * 100 + '%'); });
+  const w = S.wind, pct = (Math.abs(w) / WIND_MAX) * 50; if (E.wFill._wind !== w) { E.wFill._wind = w; E.wFill.style.left = (w >= 0 ? 50 : 50 - pct) + '%'; E.wFill.style.width = pct + '%'; }
   st(E.wVal, w === 0 ? '0' : w > 0 ? `${w} →` : `← ${-w}`); st(E.roundTxt, `Hiệp ${Math.max(1, S.round)}`);
   const tm = S.state === 'aim' ? Math.max(0, Math.ceil(S.timer)) : '–'; st(E.timer, String(tm)); E.clock.style.setProperty('--p', (S.state === 'aim' ? (S.timer / TURN_TIME) * 100 : 100) + '%'); E.clock.classList.toggle('low', S.state === 'aim' && S.timer < 6);
   const hh = S.cur;
@@ -1612,6 +1616,7 @@ function netApplySnap(d) {
 }
 function updateGuest(dt) {
   S.time += dt;
+  for (const p of S.projs) if (!p.alive && p.trail.length) p.trail.splice(0, 2);
   for (const c of S.clouds) { c.x += (S.wind * 8 + (S.wind >= 0 ? 5 : -5)) * dt * (0.6 + c.s * 0.4); if (c.x > W + 300) c.x = -300; if (c.x < -300) c.x = W + 300; }
   for (const p of S.parts) { p.life -= dt; if (p.type === 'ring') { p.r += (p.max - p.r) * Math.min(1, dt * 10); continue; } p.vy += (p.g || 0) * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.985; }
   S.parts = S.parts.filter((p) => p.life > 0); for (const f of S.floats) { f.life -= dt; f.y -= 32 * dt; } S.floats = S.floats.filter((f) => f.life > 0);

@@ -17,6 +17,7 @@ Game bắn canh góc theo lượt (kiểu Gunny) chạy trên trình duyệt, c�
 - **Bán đồ:** nút Bán trên từng món, và Bán nhanh trong Túi đồ (bán mọi món chưa mặc từ Cơ bản đến bậc chọn, theo ô đang lọc; bấm 2 lần để xác nhận).
 - **6 boss vẽ riêng, có chuyển động:** Gấu Đá (đá + rêu), Kim Sư Vương (bờm lửa, vương miện), Huyền Quy Lão Tổ (mai phát sáng, cầu phép bay quanh), Địa Ma Vương (dung nham, sừng, lửa vai), Thiên Lôi Điểu (vẫy cánh, sét), Thần Long Thái Cổ (cánh dơi, lửa trong miệng). Đạn boss cũng theo từng boss.
 - **Phòng & Chat (online):** xem ai đang online, chat thế giới, tạo phòng (đấu đội 1v1/2v2 hoặc đánh boss), mời người đang online vào phòng (họ nhận lời mời bật lên), chat trong phòng và trong trận, sẵn sàng / đổi đội / mời ra. Ô trống do máy chơi. Ai thoát giữa trận thì máy chơi thay; chủ phòng thoát thì trận bị huỷ.
+- **Sát thương lan:** vụ nổ trúng ai cũng mất máu, kể cả chính mình và đồng đội (chỉ sát thương lên đối thủ mới được tính vào thống kê và nộ). Gió từ -5 đến 5.
 - **8 bản đồ,** camera kéo được, phóng to/thu nhỏ, bản đồ thu nhỏ (minimap), chơi màn hình ngang trên điện thoại.
 
 ## Cấu trúc thư mục
