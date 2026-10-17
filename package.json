@@ -1,0 +1,16 @@
+{
+  "name": "h2t-shooting",
+  "version": "1.0.0",
+  "description": "H2T-shooting: game bắn canh góc theo lượt, đấu đội và đánh boss, trang bị 6 bậc",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}

@@ -1,0 +1,28 @@
+# Render Blueprint cho H2T-shooting: 1 web service Node.js + 1 cơ sở dữ liệu PostgreSQL.
+# Trên Render: New > Blueprint > chọn repo GitHub này > Apply.
+services:
+  - type: web
+    name: h2t-shooting
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: h2t-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      # Tên đăng nhập có quyền admin, cách nhau bằng dấu phẩy. Render hỏi giá trị này khi tạo Blueprint.
+      - key: ADMIN_USERNAMES
+        sync: false
+
+databases:
+  - name: h2t-db
+    plan: free
+    databaseName: h2t
+    user: h2t
