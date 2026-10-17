@@ -1,5 +1,5 @@
-# Render Blueprint cho H2T-shooting: 1 web service Node.js + 1 cơ sở dữ liệu PostgreSQL.
-# Trên Render: New > Blueprint > chọn repo GitHub này > Apply.
+# Render Blueprint cho H2T-shooting: 1 web service Node.js, dữ liệu lưu trên Neon PostgreSQL.
+# Trên Render: New > Blueprint > chọn repo GitHub này > Render hỏi DATABASE_URL và ADMIN_USERNAMES > Apply.
 services:
   - type: web
     name: h2t-shooting
@@ -11,18 +11,16 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
+      # Chuỗi kết nối Neon (Neon Console > Connect), dạng:
+      # postgresql://user:matkhau@ep-xxxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+      # Không ghi giá trị thật vào file này; Render sẽ hỏi khi tạo Blueprint.
       - key: DATABASE_URL
-        fromDatabase:
-          name: h2t-db
-          property: connectionString
+        sync: false
+      # Bắt buộc SSL khi kết nối Neon
+      - key: PGSSL
+        value: "true"
       - key: SESSION_SECRET
         generateValue: true
       # Tên đăng nhập có quyền admin, cách nhau bằng dấu phẩy. Render hỏi giá trị này khi tạo Blueprint.
       - key: ADMIN_USERNAMES
         sync: false
-
-databases:
-  - name: h2t-db
-    plan: free
-    databaseName: h2t
-    user: h2t

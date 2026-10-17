@@ -1,5 +1,5 @@
 /* H2T-shooting — lớp lưu trữ.
-   Có biến DATABASE_URL -> PostgreSQL (Render Postgres).
+   Có biến DATABASE_URL -> PostgreSQL (Neon, Render Postgres hoặc Postgres bất kỳ).
    Không có              -> file data/dev-db.json, chỉ để chạy thử trên máy. */
 'use strict';
 const fs = require('fs');
@@ -7,9 +7,13 @@ const path = require('path');
 
 function pgStore(url) {
   const { Pool } = require('pg');
-  // URL nội bộ của Render (dpg-xxx-a) và localhost không cần SSL; URL bên ngoài (*.render.com) thì cần.
-  const needSSL = /\.render\.com/.test(url) || process.env.PGSSL === 'true';
-  const pool = new Pool({ connectionString: url, ssl: needSSL ? { rejectUnauthorized: false } : false, max: 8 });
+  // Neon (*.neon.tech), Render bên ngoài (*.render.com) hoặc PGSSL=true thì bật SSL; localhost thì không.
+  // Bỏ tham số sslmode/channel_binding khỏi URL để cấu hình SSL bên dưới không bị ghi đè.
+  const needSSL = /neon\.tech|\.render\.com/.test(url) || /sslmode=(require|verify)/.test(url) || process.env.PGSSL === 'true';
+  const u = new URL(url); u.searchParams.delete('sslmode'); u.searchParams.delete('channel_binding');
+  // Neon free tự ngủ khi không dùng; lần kết nối đầu có thể mất vài giây để "đánh thức".
+  const pool = new Pool({ connectionString: u.toString(), ssl: needSSL ? { rejectUnauthorized: false } : false, max: 5,
+    connectionTimeoutMillis: 15000, idleTimeoutMillis: 30000, keepAlive: true });
   pool.on('error', (e) => console.error('[H2T] Lỗi kết nối PostgreSQL:', e.message));
   return {
     kind: 'postgres',

@@ -69,32 +69,42 @@ git remote add origin https://github.com/<tên-của-bạn>/h2t-shooting.git
 git push -u origin main
 ```
 
-## Triển khai lên Render
+## Triển khai lên Render + Neon PostgreSQL
 
-1. Đăng nhập https://dashboard.render.com, chọn **New → Blueprint**.
-2. Kết nối GitHub và chọn repo `h2t-shooting`. Render đọc file `render.yaml` và tạo 2 thứ:
-   - Web service `h2t-shooting` (Node.js).
-   - Cơ sở dữ liệu PostgreSQL `h2t-db`, tự nối vào web service qua biến `DATABASE_URL`.
-3. Render hỏi giá trị `ADMIN_USERNAMES`. Điền tên đăng nhập bạn sẽ dùng, ví dụ `tam`. Có thể điền nhiều tên, cách nhau bằng dấu phẩy.
-4. Bấm **Apply**, đợi build xong, mở đường dẫn dạng `https://h2t-shooting.onrender.com`.
-5. Đăng ký tài khoản đúng tên đã điền ở bước 3. Tab **Admin** sẽ hiện ra.
+### Bước 1: tạo database trên Neon
 
-Mỗi lần bạn `git push` lên nhánh main, Render tự build lại.
+1. Đăng nhập https://console.neon.tech, tạo **Project** mới (chọn region gần người chơi, ví dụ Singapore `aws-ap-southeast-1`).
+2. Trong project, bấm **Connect**, bật **Connection pooling**, copy chuỗi kết nối dạng:
+   `postgresql://<user>:<mật-khẩu>@ep-xxxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`
+3. Không cần tạo bảng: server tự tạo bảng `users`, `profiles` lần đầu khởi động.
+
+### Bước 2: tạo web service trên Render
+
+1. Đăng nhập https://dashboard.render.com, chọn **New → Blueprint**, kết nối GitHub và chọn repo `h2t-shooting`.
+2. Render đọc `render.yaml` và hỏi 2 giá trị:
+   - `DATABASE_URL`: dán chuỗi kết nối Neon ở bước 1.
+   - `ADMIN_USERNAMES`: tên đăng nhập sẽ làm admin, ví dụ `tam` (nhiều tên cách nhau bằng dấu phẩy).
+3. Bấm **Apply**, đợi build xong, mở đường dẫn dạng `https://h2t-shooting.onrender.com`. Mở `/api/health` phải thấy `"db":"postgres"`.
+4. Đăng ký tài khoản đúng tên đã điền ở `ADMIN_USERNAMES`. Tab **Admin** sẽ hiện ra.
+
+Mỗi lần bạn `git push` lên nhánh main, Render tự build lại. Đổi database sau này: Render → service → **Environment** → sửa `DATABASE_URL` → Save (Render tự khởi động lại).
 
 ### Biến môi trường
 
 | Biến | Ý nghĩa |
 |---|---|
-| `DATABASE_URL` | Chuỗi kết nối PostgreSQL. Blueprint tự điền. |
+| `DATABASE_URL` | Chuỗi kết nối Neon. Nhập khi tạo Blueprint, **không** ghi vào file trong repo. |
+| `PGSSL` | `true`: bật SSL (Neon bắt buộc). Đã đặt sẵn trong `render.yaml`. |
 | `SESSION_SECRET` | Khóa ký phiên đăng nhập. Blueprint tự sinh ngẫu nhiên. |
 | `ADMIN_USERNAMES` | Tên đăng nhập có quyền admin, cách nhau bằng dấu phẩy. Bỏ trống thì tài khoản đăng ký **đầu tiên** thành admin. |
 | `PORT` | Render tự đặt. |
 
-### Lưu ý về gói miễn phí của Render
+### Lưu ý
 
-- Web service miễn phí **ngủ sau 15 phút** không có người vào. Lần mở tiếp theo mất khoảng 1 phút để khởi động.
-- PostgreSQL miễn phí có **1 GB**, **hết hạn sau 30 ngày** kể từ khi tạo. Sau đó có 14 ngày để nâng lên gói trả phí, quá hạn thì Render xóa dữ liệu. Gói miễn phí không có sao lưu.
-- Muốn giữ dữ liệu người chơi lâu dài, hãy nâng database lên gói trả phí trước khi hết 30 ngày.
+- Web service miễn phí của Render **ngủ** khi lâu không có người vào; lần mở tiếp theo mất khoảng 1 phút để khởi động.
+- Neon gói miễn phí tự tạm dừng database khi không dùng; lần truy vấn đầu sau đó chậm vài giây (server đã đặt thời gian chờ kết nối 15 giây). Dung lượng và giới hạn gói miễn phí xem trên trang giá của Neon.
+- Dữ liệu nằm trên Neon nên không bị mất khi Render build lại hoặc xóa web service.
+- Đã từng tạo database `h2t-db` trên Render bằng `render.yaml` cũ: Blueprint mới không còn quản lý nó; xóa tay trong Render nếu không dùng nữa.
 
 ## Admin
 
