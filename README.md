@@ -13,6 +13,10 @@ Game bắn canh góc theo lượt (kiểu Gunny) chạy trên trình duyệt, c�
 - **Đạn theo vũ khí:** Trượng bắn cầu phép, Cung bắn tên, Thương phóng giáo, Kiếm chém vòng cung, Quyền Trượng bắn sao; đạn to và sáng hơn theo bậc.
 - **Nhạc nền theo bản đồ:** tạo bằng Web Audio (không cần file nhạc), mỗi bản đồ một giai điệu, đánh boss nhịp nhanh hơn. Nút Nhạc ở sảnh và trong trận.
 - **Dây chuyền, vòng tay:** 5 kiểu mỗi loại (Ngọc Bội, Bùa Hộ Mệnh, Ngọc Trai, Tâm Ngọc, Nanh Thú; Kim Trạc, Chuỗi Hạt, Lắc Xích, Hộ Uyển, Lắc Bùa), icon vẽ bằng `tools/draw_icons.py`.
+- **Cửa hàng:** rương, Tiệm vũ khí, Tiệm đá & bùa (Đá cường hóa 60, Hoàng/Huyền/Địa/Thiên/Thần Tinh Thạch 1.500 / 5.000 / 15.000 / 40.000 / 100.000, Bùa may mắn 2.500, Bùa bảo hộ 4.000 vàng; mua ×1/×5/×10/×50).
+- **Bán đồ:** nút Bán trên từng món, và Bán nhanh trong Túi đồ (bán mọi món chưa mặc từ Cơ bản đến bậc chọn, theo ô đang lọc; bấm 2 lần để xác nhận).
+- **6 boss vẽ riêng, có chuyển động:** Gấu Đá (đá + rêu), Kim Sư Vương (bờm lửa, vương miện), Huyền Quy Lão Tổ (mai phát sáng, cầu phép bay quanh), Địa Ma Vương (dung nham, sừng, lửa vai), Thiên Lôi Điểu (vẫy cánh, sét), Thần Long Thái Cổ (cánh dơi, lửa trong miệng). Đạn boss cũng theo từng boss.
+- **Phòng & Chat (online):** xem ai đang online, chat thế giới, tạo phòng (đấu đội 1v1/2v2 hoặc đánh boss), mời người đang online vào phòng (họ nhận lời mời bật lên), chat trong phòng và trong trận, sẵn sàng / đổi đội / mời ra. Ô trống do máy chơi. Ai thoát giữa trận thì máy chơi thay; chủ phòng thoát thì trận bị huỷ.
 - **8 bản đồ,** camera kéo được, phóng to/thu nhỏ, bản đồ thu nhỏ (minimap), chơi màn hình ngang trên điện thoại.
 
 ## Cấu trúc thư mục
@@ -21,7 +25,8 @@ Game bắn canh góc theo lượt (kiểu Gunny) chạy trên trình duyệt, c�
 h2t-shooting/
 ├── server.js        Máy chủ: phục vụ game và API (tài khoản, nâng cấp, phần thưởng, admin)
 ├── db.js            Lưu trữ: PostgreSQL khi có DATABASE_URL, nếu không thì file JSON
-├── package.json     Chỉ cần 1 thư viện: pg
+├── social.js        WebSocket /ws: online, chat, phòng, lời mời, chuyển dữ liệu trận online
+├── package.json     Thư viện: pg (PostgreSQL), ws (WebSocket)
 ├── render.yaml      Cấu hình Render (web service + PostgreSQL)
 └── public/
     ├── index.html   Giao diện
@@ -123,6 +128,14 @@ Trong tab **Admin**, admin có thể:
 - Cấp hoặc bỏ quyền admin cho người khác.
 
 Mọi lần admin tặng đồ đều được ghi vào log của server trên Render.
+
+## Trận online hoạt động thế nào
+
+- Trình duyệt của **chủ phòng** chạy trận (giống trận thường), 15 lần/giây gửi trạng thái cho người khác qua máy chủ; người khác gửi phím bấm cho chủ phòng.
+- Máy chủ lấy trang bị của từng người từ database, tạo trận và trả thưởng cho từng người khi chủ phòng báo kết quả (thưởng tính như đấu với máy cùng bậc).
+- Chủ phòng nên có mạng ổn định và **để tab game mở** (trình duyệt dừng game khi tab bị ẩn lâu).
+- Danh sách phòng và chat chỉ lưu trong bộ nhớ máy chủ: khi Render khởi động lại (deploy mới, hoặc gói free ngủ rồi thức dậy) thì phòng và chat cũ mất, hồ sơ người chơi vẫn còn.
+- Render hỗ trợ WebSocket sẵn, không cần cấu hình thêm.
 
 ## Chống gian lận
 

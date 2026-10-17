@@ -188,6 +188,11 @@
     return L;
   }
   const salvageValue = (it) => 2 + it.tier * 4 + it.lvl * 2;
+  // Giá bán trang bị lấy vàng (thấp hơn giá mua để tránh lãi vô hạn)
+  const sellValue = (it) => Math.round(40 * (1 + it.tier * it.tier * 4) * (1 + it.lvl * 0.4) * (SLOTS[it.slot].up ? 1 : 1.2));
+  // Cửa hàng nguyên liệu: giá 1 cái
+  const MAT_SHOP = [{ k: 'stone', price: 60 }, { k: 't1', price: 1500 }, { k: 't2', price: 5000 }, { k: 't3', price: 15000 }, { k: 't4', price: 40000 }, { k: 't5', price: 100000 },
+    { k: 'luck', price: 2500 }, { k: 'guard', price: 4000 }];
   function addMats(p, o) { for (const k in o) { if (k === 'gold') p.gold += o[k]; else p.mats[k] = (p.mats[k] || 0) + o[k]; } }
   function addItem(p, it) {
     if (p.items.filter((i) => !isEquipped(p, i)).length >= INV_CAP) { const v = salvageValue(it); p.mats.stone += v; return `Túi đầy, ${itemName(it)} đã phân rã thành ${v} đá`; }
@@ -223,7 +228,7 @@
         if (rng() < 0.25) add('guard', 1);
         if (rng() < 0.4) out.items.push(mkItem(pick(SLOT_ORDER, rng), b.t, 0, 0.92 + rng() * 0.23, null, rng));
       } else { const r = REWARD.bossLose(b.t); add('gold', r.gold); add('stone', r.stone); }
-    } else if (pend.opp === 'bot') {
+    } else if (pend.opp === 'bot' || pend.opp === 'online') {
       if (win) { const r = REWARD.pvpWin(pend.tier); add('gold', r.gold); add('stone', r.stone); if (rng() < 0.15) add('luck', 1); }
       else { const r = REWARD.pvpLose(pend.tier); add('gold', r.gold); add('stone', r.stone); }
     }
@@ -250,6 +255,22 @@
       case 'salvage': {
         const it = itemById(p, d.uid); if (!it) return fail('Không tìm thấy trang bị'); if (isEquipped(p, it)) return fail('Tháo trang bị trước khi phân rã');
         const v = salvageValue(it); p.items = p.items.filter((x) => x !== it); p.mats.stone += v; return { ok: true, stone: v };
+      }
+      case 'sell': {
+        const it = itemById(p, d.uid); if (!it) return fail('Không tìm thấy trang bị'); if (isEquipped(p, it)) return fail('Tháo trang bị trước khi bán');
+        const g = sellValue(it); p.items = p.items.filter((x) => x !== it); p.gold += g; return { ok: true, gold: g };
+      }
+      case 'sellBulk': { // bán nhanh mọi món chưa mặc có bậc <= maxTier (lọc theo ô nếu có)
+        const maxT = clampInt(d.maxTier, 0, 5), slot = SLOTS[d.slot] ? d.slot : null;
+        const list = p.items.filter((it) => !isEquipped(p, it) && it.tier <= maxT && (!slot || it.slot === slot));
+        if (!list.length) return fail('Không có món nào để bán');
+        const g = list.reduce((a, it) => a + sellValue(it), 0); const ids = new Set(list.map((x) => x.uid));
+        p.items = p.items.filter((x) => !ids.has(x.uid)); p.gold += g; return { ok: true, gold: g, count: list.length };
+      }
+      case 'buyMat': {
+        const m = MAT_SHOP.find((x) => x.k === d.mat); if (!m) return fail('Không bán nguyên liệu này');
+        const q = clampInt(d.qty, 1, 999), cost = m.price * q; if (p.gold < cost) return fail('Không đủ vàng');
+        p.gold -= cost; p.mats[m.k] = (p.mats[m.k] || 0) + q; return { ok: true, mat: m.k, qty: q, cost };
       }
       case 'forge': {
         const it = itemById(p, d.uid); if (!it) return fail('Không tìm thấy trang bị');
@@ -283,7 +304,7 @@
           pend.boss = clampInt(d.boss, 0, 5); pend.size = clampInt(d.size, 2, 4);
           const b = BOSSES[pend.boss]; out.boss = pend.boss; out.size = pend.size; out.bossStats = bossStats(b, pend.size); out.map = b.map;
         } else {
-          pend.size = clampInt(d.size, 1, 2); pend.tier = clampInt(d.tier, 0, 5); pend.opp = d.opp === 'p2' ? 'p2' : 'bot';
+          pend.size = clampInt(d.size, 1, 2); pend.tier = clampInt(d.tier, 0, 5); pend.opp = ['p2', 'online'].includes(d.opp) ? d.opp : 'bot';
           out.size = pend.size; out.tier = pend.tier; out.opp = pend.opp; out.diff = ['easy', 'normal', 'hard'].includes(d.diff) ? d.diff : 'normal';
           out.map = MAPS.some((m) => m.id === d.map) ? d.map : 'forest';
           out.enemies = Array.from({ length: pend.size }, () => genSet(pend.tier, rng));
@@ -301,7 +322,7 @@
         const rw = short ? { mats: {}, items: [] } : rewardsFor(pend, win, rng); addMats(p, rw.mats);
         const notes = []; for (const it of rw.items) { const n = addItem(p, it); if (n) notes.push(n); }
         if (pend.mode === 'boss' && win) p.rec.boss[BOSSES[pend.boss].t] = (p.rec.boss[BOSSES[pend.boss].t] || 0) + 1;
-        if (pend.mode === 'pvp' && pend.opp === 'bot') { if (win) p.rec.wins++; else p.rec.losses++; }
+        if (pend.mode === 'pvp' && pend.opp !== 'p2') { if (win) p.rec.wins++; else p.rec.losses++; }
         if (note) notes.push(note);
         return { ok: true, win, rewards: rw, notes };
       }
@@ -318,7 +339,7 @@
     return { ok: true, notes };
   }
 
-  return { TIERS, STATS, STATN, BASE, SLOT_ORDER, SLOTS, SUP, SUP_KINDS, SUP_CD, TYPES, DEFAULT_TYPE, typeName, needsMigrate, MATS, LV_RATE, BREAK_RATE, LUCK_BONUS, INV_CAP, START_GOLD, SHOTS, BOSSES, MAPS, SHOP, WEAPON_SHOP, REWARD, MIN_WIN_MS,
+  return { TIERS, STATS, STATN, BASE, SLOT_ORDER, SLOTS, SUP, SUP_KINDS, SUP_CD, TYPES, DEFAULT_TYPE, typeName, needsMigrate, MATS, LV_RATE, BREAK_RATE, LUCK_BONUS, INV_CAP, START_GOLD, SHOTS, BOSSES, MAPS, SHOP, WEAPON_SHOP, MAT_SHOP, sellValue, REWARD, MIN_WIN_MS,
     lvCost, breakCost, mkItem, itemName, itemStats, supPower, supDesc, statLine, totalStats, powerOf, red, derived, genSet, refStats, bossStats,
     LOOK, DEFAULT_LOOK, cleanLook, randomLook,
     newProfile, validProfile, migrate, itemById, isEquipped, equippedItems, looksOf, salvageValue, forgeInfo, canPay, have, apply, adminGrant, fmt };

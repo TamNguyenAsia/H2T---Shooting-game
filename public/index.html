@@ -369,6 +369,39 @@ details summary{cursor:pointer;font-weight:600}
 }
 @media (max-width:700px){ .who{display:none} .bars{grid-template-columns:1fr 1fr;gap:6px} .bars .bar:first-child{grid-column:1/3} }
 .wshop{display:grid;gap:12px}
+/* Phòng & Chat */
+.social-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.social-grid{grid-template-columns:1fr}}
+.scol{display:grid;gap:12px;align-content:start}
+.chatcard{display:grid;gap:8px}
+.chatlist{height:240px;overflow-y:auto;display:grid;align-content:start;gap:3px;padding:8px;border-radius:10px;background:#130d22;border:1px solid var(--line);font-size:.85rem}
+.cl{line-height:1.35;word-break:break-word}.cl.sys{color:var(--muted);font-style:italic;font-size:.78rem}
+.chatrow{display:flex;gap:6px}.chatrow input{flex:1;min-width:0}
+.olist{display:grid;gap:4px;max-height:280px;overflow-y:auto}
+.orow{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;padding:4px 2px;border-bottom:1px solid var(--line)}
+.orow .note{margin:0;font-size:.72rem}
+.dot{width:9px;height:9px;border-radius:50%;background:#5fd38a;box-shadow:0 0 6px #5fd38a}.dot.busy{background:#ffb04a;box-shadow:0 0 6px #ffb04a}
+.rrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+.rteams{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rteam{display:grid;gap:6px;align-content:start;padding:10px;border-radius:12px;border:1px solid color-mix(in srgb,var(--team) 55%,transparent);background:color-mix(in srgb,var(--team) 8%,transparent)}
+.rteam h4{margin:0;color:var(--team)}
+.mchip{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:9px;background:#1a1229;border:1px solid var(--line)}
+.mchip.me{border-color:var(--brass)}.mchip.bot{opacity:.6;border-style:dashed}
+.mchip b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:.68rem;padding:1px 6px;border-radius:6px;background:#2a2040;color:var(--muted)}
+.tag.ok{background:#1f4a2a;color:#9ff0b0}.tag.host{background:#4a3a10;color:#ffe08a}
+.badge-n{margin-left:auto;font-size:.7rem;padding:0 6px;border-radius:8px;background:#1f4a2a;color:#9ff0b0}
+#invites{position:fixed;left:16px;bottom:16px;display:grid;gap:8px;z-index:60;max-width:min(360px,calc(100vw - 32px))}
+.invite{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:#2a1f44;border:1px solid var(--brass);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.invite .note{margin:0}
+#bchat{position:absolute;left:50%;bottom:190px;transform:translateX(-50%);width:min(460px,80%);z-index:7}
+#bchat input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--brass);background:rgba(18,12,32,.92);color:var(--ink)}
+.qsell{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px}
+.qsell #btnQuickSell{margin-left:auto}
+.matshop{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.mshop{display:grid;justify-items:center;gap:4px;padding:10px 8px;border-radius:12px;background:var(--panel);border:1px solid var(--line);text-align:center}
+.mshop canvas{width:56px;height:56px}.mshop b{font-size:.85rem}.mshop .note{margin:0;font-size:.7rem}
+.mshop .price{font-size:.9rem}.mshop .btn{width:100%}
 .wtypes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .wtype{display:grid;justify-items:center;gap:4px;padding:8px 4px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-size:.78rem}
 .wtype canvas{width:64px;height:64px}
@@ -437,6 +470,7 @@ details summary{cursor:pointer;font-weight:600}
         <button class="tool" id="tZoomIn" type="button" aria-label="Phóng to">+</button>
         <button class="tool" id="tCenter" type="button" aria-label="Về nhân vật đang bắn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg></button>
         <button class="tool" id="tFull" type="button" aria-label="Toàn màn hình"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <button class="tool" id="tChat" type="button" aria-label="Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v10H9l-5 4z"/></svg></button>
         <button class="tool" id="tMusic" type="button" aria-label="Bật tắt nhạc nền"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path id="musSlash" d="M3 3l18 18" style="display:none"/></svg></button>
         <button class="tool" id="tSound" type="button" aria-label="Bật tắt âm thanh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="sndWave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
         <button class="tool" id="tLeave" type="button" aria-label="Rời trận"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
@@ -447,6 +481,7 @@ details summary{cursor:pointer;font-weight:600}
   <div id="feed"></div>
   <div id="banner"></div>
   <div id="usePop" aria-live="polite"></div>
+  <div id="bchat" hidden><input id="bchatIn" maxlength="200" placeholder="Nhập tin nhắn, Enter để gửi, Esc để đóng" autocomplete="off"></div>
   <div class="hud-bot locked" id="hudBot">
     <div class="dpad" aria-label="Điều khiển góc bắn và di chuyển">
       <button class="dp up" id="bUp" data-hold="up" type="button" aria-label="Tăng góc"></button>
@@ -489,6 +524,7 @@ details summary{cursor:pointer;font-weight:600}
 <div id="rotate" hidden><div><div class="ph"></div><h3>Xoay ngang điện thoại</h3><p class="note">Trận đấu chơi ở màn hình ngang.</p></div></div>
 <div class="modal" id="result" hidden><div class="mbox" id="resultBox"></div></div>
 <div id="toast"></div>
+<div id="invites"></div>
 
 <script src="assets/atlas.js"></script>
 <script src="rules.js"></script>

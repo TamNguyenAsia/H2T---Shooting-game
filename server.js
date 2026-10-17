@@ -1,6 +1,6 @@
 /* H2T-shooting — máy chủ.
    Phục vụ giao diện game (thư mục public/) và API: tài khoản, hồ sơ, nâng cấp, phần thưởng, admin.
-   Chỉ dùng thư viện có sẵn của Node.js, cộng thêm "pg" để nói chuyện với PostgreSQL. */
+   Dùng thư viện có sẵn của Node.js, cộng thêm "pg" (PostgreSQL) và "ws" (WebSocket cho chat, phòng, trận online). */
 'use strict';
 const http = require('http');
 const fs = require('fs');
@@ -97,9 +97,9 @@ async function loadProfile(u) {
 }
 
 /* ---------- các API ---------- */
-const ACTIONS = new Set(['equip', 'unequip', 'salvage', 'forge', 'buy', 'buyWeapon', 'look', 'battleStart', 'battleEnd']);
+const ACTIONS = new Set(['equip', 'unequip', 'salvage', 'forge', 'buy', 'buyWeapon', 'buyMat', 'sell', 'sellBulk', 'look', 'battleStart', 'battleEnd']);
 const routes = {
-  'GET /api/health': async () => ({ ok: true, app: 'h2t', db: store.kind }),
+  'GET /api/health': async () => ({ ok: true, app: 'h2t', db: store.kind, online: social ? social.onlineCount() : 0 }),
 
   'POST /api/register': async (req, body) => {
     if (limited('reg:' + clientIp(req), 10, 600e3)) throw new HttpError(429, 'Thử quá nhiều lần, đợi vài phút rồi thử lại');
@@ -228,6 +228,9 @@ const server = http.createServer(async (req, res) => {
     send(res, 500, { error: 'Máy chủ gặp lỗi, thử lại sau' });
   }
 });
+
+// Chat, phòng chơi, mời bạn, trận online qua WebSocket (đường dẫn /ws)
+const social = require('./social')(server, { readToken, store, R, rng });
 
 store.init().then(() => {
   server.listen(PORT, () => console.log(`[H2T] Đang chạy cổng ${PORT} · lưu trữ: ${store.kind}`));
