@@ -3,25 +3,29 @@
 Game bắn canh góc theo lượt (kiểu Gunny) chạy trên trình duyệt, có tài khoản và cơ sở dữ liệu PostgreSQL.
 
 - **Hai chế độ:** Đấu đội (1v1, 2v2, 3v3, 4v4 với máy, 2 người cùng máy hoặc online) và Đánh boss (2–4 người, 6 boss theo 6 bậc).
-- **Nhân vật như nhau, khác nhau ở trang bị:** mọi người chơi là pháp sư Sylva; nón, áo, vũ khí, nhẫn hiện trực tiếp lên nhân vật (5 kiểu × 6 bậc mỗi ô), thêm vật phẩm hỗ trợ, dây chuyền, vòng tay.
-- **6 vật phẩm hỗ trợ:** Bình Hồi Phục, Khiên Pha Lê, Đá Rune Lửa (tăng sát thương, nổ rộng), Bom Băng Giá (đóng băng mục tiêu 1 lượt, boss kháng), Lông Vũ Gió (hiện đường đạn, bỏ qua gió, hồi thể lực), Tiên Dược Vàng (tăng nộ).
+- **Phong cách kiếm hiệp cổ trang:** mọi người chơi là một thiếu hiệp búi tóc, đuôi tóc dài; nón, áo, vũ khí, nhẫn hiện trực tiếp lên nhân vật (5 kiểu × 6 bậc mỗi ô), thêm vật phẩm hỗ trợ, dây chuyền, vòng tay.
+  - Vũ khí: Thiền Trượng, Trường Kiếm, Cung, Thiết Phiến, Hồng Anh Thương.
+  - Nón: Nón Lá, Kim Quan, Mũ Cánh Chuồn, Mũ Trụ, Đầu Đới.
+  - Áo: Đạo Bào, Chiến Giáp, Phi Phong, Lân Giáp, Võ Phục.
+  - Nhẫn: Nhẫn Ngọc, Nhẫn Ấn, Nhẫn Phỉ Thúy, Nhẫn Long Trảo, Nhẫn Phượng Quan.
+- **6 vật phẩm hỗ trợ:** Hồi Xuân Đan (hồi máu), Kim Chung Tráo (tạo giáp), Hỏa Phù (tăng sát thương, nổ rộng), Hàn Băng Châu (đóng băng mục tiêu 1 lượt, boss kháng), Lông Hạc (hiện đường đạn, bỏ qua gió, hồi thể lực), Đại Hoàn Đan (tăng nộ).
 - **6 bậc trang bị:** Cơ bản → Hoàng cấp → Huyền cấp → Địa cấp → Thiên cấp → Tuyệt cấp. Mỗi bậc phải nâng đủ 3 level, tỉ lệ thành công giảm dần.
 - **Nâng cấp cần nguyên liệu và vàng.** Nguyên liệu rơi từ boss hoặc do admin tạo.
-- **Cửa hàng:** rương ngẫu nhiên và Tiệm vũ khí (chọn kiểu Trượng/Kiếm/Cung/Quyền Trượng/Thương, bậc Cơ bản → Huyền cấp).
+- **Cửa hàng:** bảo rương ngẫu nhiên và Tiệm vũ khí (chọn kiểu Thiền Trượng/Trường Kiếm/Cung/Thiết Phiến/Hồng Anh Thương, bậc Cơ bản → Huyền cấp).
 - **Giao diện trận đấu kiểu điện thoại:** vòng điều khiển tròn bên trái (giữa hiện góc bắn), ô kỹ năng/vật phẩm vuông, thước lực 0–100, thanh HP / TL (thể lực) / NL (nộ), nút POW (tuyệt kỹ) và nút Bắn tròn bên phải. Phím tắt: mũi tên/WASD, Space để bắn, 1–4 chọn kỹ năng.
 - **Kỹ năng đặc biệt cộng dồn** (bấm nhiều lần để chồng, tối đa thêm 4 viên; x2 và Bay bấm lại để bỏ; nút ↺ hoặc phím Backspace huỷ hết, hoàn NL).
 - **Trọng thương:** chỉ số mới **May mắn** (có trên Vũ khí, Dây chuyền, Nhẫn, Vòng tay) cho tỉ lệ gây Trọng thương ×2 sát thương, tối đa 35%. Trong trận máu và sát thương hiển thị ×100.
 - **Kỹ năng đặc biệt (tốn NL, mỗi lượt có 100 NL):** +10% (10), +20% (20), +50% (40), x2 bắn 2 loạt mỗi loạt 70% (60), Bay theo viên đạn không gây sát thương (50), +1 viên mỗi viên 60% (30), +2 viên mỗi viên 45% (50). Phím 5 6 7 8 9 0 -.
-- **Đạn theo vũ khí:** Trượng bắn cầu phép, Cung bắn tên, Thương phóng giáo, Kiếm chém vòng cung, Quyền Trượng bắn sao; đạn to và sáng hơn theo bậc.
+- **Đạn theo vũ khí:** Thiền Trượng bắn chưởng khí, Cung bắn tên, Thương phóng thương, Kiếm chém kiếm khí, Thiết Phiến phóng ám khí; đạn to và sáng hơn theo bậc.
 - **Nhạc nền theo bản đồ:** tạo bằng Web Audio (không cần file nhạc), mỗi bản đồ một giai điệu, đánh boss nhịp nhanh hơn. Nút Nhạc ở sảnh và trong trận.
-- **Dây chuyền, vòng tay:** 5 kiểu mỗi loại (Ngọc Bội, Bùa Hộ Mệnh, Ngọc Trai, Tâm Ngọc, Nanh Thú; Kim Trạc, Chuỗi Hạt, Lắc Xích, Hộ Uyển, Lắc Bùa), icon vẽ bằng `tools/draw_icons.py`.
+- **Dây chuyền, vòng tay:** 5 kiểu mỗi loại (Ngọc Bội, Trường Mệnh Tỏa, Chuỗi Minh Châu, Tâm Ngọc, Nanh Hổ; Kim Trạc, Tràng Hạt, Lắc Xích, Hộ Uyển, Lắc Chuông).
 - **Cửa hàng:** rương, Tiệm vũ khí, Tiệm đá & bùa (Đá cường hóa 60, Hoàng/Huyền/Địa/Thiên/Thần Tinh Thạch 1.500 / 5.000 / 15.000 / 40.000 / 100.000, Bùa may mắn 2.500, Bùa bảo hộ 4.000 vàng; mua ×1/×5/×10/×50).
 - **Bán đồ:** nút Bán trên từng món, và Bán nhanh trong Túi đồ (bán mọi món chưa mặc từ Cơ bản đến bậc chọn, theo ô đang lọc; bấm 2 lần để xác nhận).
-- **6 boss vẽ riêng, có chuyển động:** Gấu Đá (đá + rêu), Kim Sư Vương (bờm lửa, vương miện), Huyền Quy Lão Tổ (mai phát sáng, cầu phép bay quanh), Địa Ma Vương (dung nham, sừng, lửa vai), Thiên Lôi Điểu (vẫy cánh, sét), Thần Long Thái Cổ (cánh dơi, lửa trong miệng). Đạn boss cũng theo từng boss.
+- **6 boss vẽ riêng, có chuyển động:** Gấu Đá (đá + rêu), Kim Sư Vương (bờm lửa, vương miện), Huyền Quy Lão Tổ (mai phát sáng, cầu phép bay quanh), Địa Ma Vương (dung nham, sừng, lửa vai), Thiên Lôi Điểu (vẫy cánh, sét), Thần Long Thái Cổ (rồng phương Đông thân uốn lượn, sừng hươu, râu dài, ngọc rồng). Đạn boss cũng theo từng boss.
 - **Phòng & Chat (online):** xem ai đang online, chat thế giới, tạo phòng (đấu đội 1v1/2v2 hoặc đánh boss), mời người đang online vào phòng (họ nhận lời mời bật lên), chat trong phòng và trong trận, sẵn sàng / đổi đội / mời ra. Ô trống do máy chơi. Ai thoát giữa trận thì máy chơi thay; chủ phòng thoát thì trận bị huỷ.
 - **Sát thương lan:** vụ nổ trúng ai cũng mất máu, kể cả chính mình và đồng đội (chỉ sát thương lên đối thủ mới được tính vào thống kê và nộ). Gió từ -5 đến 5.
 - **Voice chat trong phòng:** bấm "Vào voice" để nói chuyện trực tiếp với mọi người cùng phòng (WebRTC, cần cho phép micro). Có Tắt/Bật mic, tắt tiếng từng người, khung tên sáng lên khi ai đang nói; voice giữ nguyên khi vào trận (nút mic trên thanh công cụ).
-- **8 bản đồ,** camera kéo được, phóng to/thu nhỏ, bản đồ thu nhỏ (minimap), chơi màn hình ngang trên điện thoại.
+- **8 bản đồ giang hồ:** Trúc Lâm, Đại Mạc, Thiên Sơn, Hỏa Diệm Sơn, Cổ Thành, Bồng Lai, Đông Hải, Hoa Sơn (rừng trúc, cờ trận, đèn đá, đèn lồng, chùa tháp phía xa); camera kéo được, phóng to/thu nhỏ, bản đồ thu nhỏ (minimap), chơi màn hình ngang trên điện thoại.
 
 ## Cấu trúc thư mục
 
@@ -36,22 +40,30 @@ h2t-shooting/
     ├── index.html   Giao diện
     ├── game.js      Đồ họa, trận đấu, sảnh
     ├── rules.js     Luật game dùng chung cho trình duyệt và server
-    └── assets/      Gói hình fantasy, gộp thành 8 trang atlas WebP
+    └── assets/      Bộ hình kiếm hiệp, gộp thành 9 trang atlas WebP
         ├── atlas.js     Toạ độ từng hình trong atlas
         └── *.webp       char, tier, armor, hat, ring, weapon, icons, use
 tools/
+├── kiemhiep/        Bộ hình kiếm hiệp vẽ bằng SVG (art.js, gear.js, items.js) + render.py xuất WebP
 ├── pack_atlas.py    Gộp lại atlas khi thêm/sửa hình
-└── draw_icons.py    Vẽ icon dây chuyền, vòng tay, nguyên liệu (Python + Pillow)
+└── draw_icons.py    Công cụ vẽ icon cũ (không còn dùng cho bộ hình mới)
 ```
 
-## Gói hình
+## Bộ hình kiếm hiệp
 
-- Ảnh gốc PNG từ gói `fantasy_assets` đã được chuyển sang WebP (layer 512px, icon 160px), cắt viền trong suốt và gộp vào 8 trang atlas (~2,4 MB). Cả repo chỉ khoảng 20 file nên kéo thả lên GitHub web được (giới hạn 100 file mỗi lần).
-- Thêm/sửa hình: để các file WebP theo cấu trúc tên cũ (`eq/<ô>/<kiểu>/<bậc>.webp`, `eq/<ô>/<kiểu>/<bậc>i.webp`, `items/<id>.webp`, `use/<id>.webp`, `tier/aura<bậc>.webp`, `tier/ring<bậc>.webp`, `char/body.webp`) vào một thư mục, rồi chạy `python tools/pack_atlas.py <thư-mục-hình> public/assets`.
-- Nhân vật được ghép theo thứ tự trong manifest: hào quang → vòng chân → thân → áo → nhẫn → nón → vũ khí. Bậc hào quang = bậc trung bình của Vũ khí, Nón, Áo.
-- Kiểu trang bị (Trượng, Kiếm, Cung…; Mũ Phù Thủy, Vương Miện…) chỉ đổi ngoại hình và tên, không đổi chỉ số. Đồ mới rơi ra có kiểu ngẫu nhiên; admin chọn được kiểu khi tạo đồ.
-- Dây chuyền và vòng tay chưa có hình trong gói nên vẫn dùng icon vẽ bằng code.
-- Hồ sơ cũ được tự nâng cấp khi đăng nhập: đồ cũ được gán kiểu cố định theo mã món đồ, Kính ngắm đổi thành Lông Vũ Gió.
+- Toàn bộ hình nhân vật, trang bị, icon, vật phẩm, nguyên liệu và hào quang được vẽ bằng SVG trong `tools/kiemhiep/` rồi xuất ra WebP. Không dùng ảnh của game khác.
+- Nhân vật ghép theo thứ tự: hào quang → vòng chân → thân → áo → nhẫn → nón → vũ khí. Bậc hào quang = bậc trung bình của Vũ khí, Nón, Áo. Vòng chân là vòng bát quái, đổi màu và hoạ tiết theo bậc.
+- Bảng màu theo bậc: Cơ bản (vải xám, gỗ) → Hoàng cấp (vàng hoàng gia, đá đỏ) → Huyền cấp (tím than, bạc) → Địa cấp (cam đất, ngọc bích) → Thiên cấp (trắng mây, xanh trời, tường vân) → Tuyệt cấp (đỏ son, vàng ròng, lửa).
+- Mã kiểu đồ trong dữ liệu (`staff`, `wizard`, `robe`...) giữ nguyên như bản trước để hồ sơ đã lưu vẫn dùng được; chỉ tên hiển thị và hình đổi.
+- Sửa hoặc vẽ thêm hình:
+
+```bash
+pip install playwright pillow && playwright install chromium
+python tools/kiemhiep/render.py /tmp/hinh          # vẽ toàn bộ 335 hình
+python tools/pack_atlas.py /tmp/hinh public/assets  # gộp lại thành atlas
+```
+
+- Xem thử khi đang vẽ: `python tools/kiemhiep/render.py --preview "[{svg:KH.dress({armor:'robe',hat:'wizard',weapon:'sword',ring:'solitaire'},3),w:512,h:512}]" xem.png`
 
 ## Chạy thử trên máy
 

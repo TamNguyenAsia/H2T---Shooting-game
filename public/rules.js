@@ -28,32 +28,33 @@
     ring: { n: 'Nhẫn', up: false, typed: true, base: { crit: 24, atk: 16, luk: 20 } },
     bracelet: { n: 'Vòng tay', up: false, typed: true, base: { agi: 28, def: 14, hp: 60, luk: 12 }, names: ['Vòng Dây', 'Kim Xà Trạc', 'Huyền Phong Trạc', 'Địa Linh Trạc', 'Thiên Vân Trạc', 'Thần Phong Trạc'] },
   };
-  // Kiểu trang bị (theo gói hình fantasy): mỗi ô có 5 kiểu, mỗi kiểu 6 bậc. Kiểu chỉ đổi ngoại hình và tên, không đổi chỉ số.
-  const TSUF = ['Sơ Khai', 'Hổ Phách', 'Nguyệt Huyền', 'Địa Linh', 'Thiên Dực', 'Phượng Hoàng'];
+  // Kiểu trang bị (bộ hình kiếm hiệp): mỗi ô có 5 kiểu, mỗi kiểu 6 bậc. Kiểu chỉ đổi ngoại hình và tên, không đổi chỉ số.
+  // Mã kiểu (staff, wizard...) giữ nguyên từ bản cũ để hồ sơ đã lưu vẫn dùng được; chỉ tên hiển thị đổi.
+  const TSUF = ['Sơ Nhập', 'Hoàng Kim', 'Huyền Âm', 'Địa Sát', 'Thiên Cương', 'Tuyệt Thế'];
   const tn = (n) => TSUF.map((x) => n + ' ' + x);
   const TYPES = {
-    weapon: { staff: { n: 'Trượng', names: ['Gậy Gỗ Sơ Khai', 'Trượng Hổ Phách', 'Nguyệt Huyền Trượng', 'Địa Linh Ngọc Trượng', 'Thiên Dực Thánh Trượng', 'Tuyệt Thế Phượng Hoàng Trượng'] },
-      sword: { n: 'Kiếm', names: tn('Kiếm') }, bow: { n: 'Cung', names: tn('Cung') }, scepter: { n: 'Quyền Trượng', names: tn('Quyền Trượng') }, spear: { n: 'Thương', names: tn('Thương') } },
-    hat: { wizard: { n: 'Mũ Phù Thủy', names: tn('Mũ Phù Thủy') }, crown: { n: 'Vương Miện', names: tn('Vương Miện') }, hood: { n: 'Mũ Trùm', names: tn('Mũ Trùm') },
-      helmet: { n: 'Mũ Giáp', names: tn('Mũ Giáp') }, beret: { n: 'Mũ Lông Vũ', names: tn('Mũ Lông Vũ') } },
-    armor: { robe: { n: 'Pháp Bào', names: tn('Pháp Bào') }, plate: { n: 'Giáp Ngực', names: tn('Giáp Ngực') }, mantle: { n: 'Áo Choàng Vai', names: tn('Áo Choàng Vai') },
-      scale: { n: 'Giáp Vảy', names: tn('Giáp Vảy') }, leather: { n: 'Giáp Da', names: tn('Giáp Da') } },
-    ring: { solitaire: { n: 'Nhẫn Ngọc', names: tn('Nhẫn Ngọc') }, signet: { n: 'Nhẫn Ấn', names: tn('Nhẫn Ấn') }, twist: { n: 'Nhẫn Xoắn', names: tn('Nhẫn Xoắn') },
-      claw: { n: 'Nhẫn Long Trảo', names: tn('Nhẫn Long Trảo') }, crown: { n: 'Nhẫn Vương Miện', names: tn('Nhẫn Vương Miện') } },
+    weapon: { staff: { n: 'Thiền Trượng', names: tn('Thiền Trượng') }, sword: { n: 'Trường Kiếm', names: tn('Trường Kiếm') }, bow: { n: 'Cung', names: tn('Cung') },
+      scepter: { n: 'Thiết Phiến', names: tn('Thiết Phiến') }, spear: { n: 'Hồng Anh Thương', names: tn('Hồng Anh Thương') } },
+    hat: { wizard: { n: 'Nón Lá', names: tn('Nón Lá') }, crown: { n: 'Kim Quan', names: tn('Kim Quan') }, hood: { n: 'Mũ Cánh Chuồn', names: tn('Mũ Cánh Chuồn') },
+      helmet: { n: 'Mũ Trụ', names: tn('Mũ Trụ') }, beret: { n: 'Đầu Đới', names: tn('Đầu Đới') } },
+    armor: { robe: { n: 'Đạo Bào', names: tn('Đạo Bào') }, plate: { n: 'Chiến Giáp', names: tn('Chiến Giáp') }, mantle: { n: 'Phi Phong', names: tn('Phi Phong') },
+      scale: { n: 'Lân Giáp', names: tn('Lân Giáp') }, leather: { n: 'Võ Phục', names: tn('Võ Phục') } },
+    ring: { solitaire: { n: 'Nhẫn Ngọc', names: tn('Nhẫn Ngọc') }, signet: { n: 'Nhẫn Ấn', names: tn('Nhẫn Ấn') }, twist: { n: 'Nhẫn Phỉ Thúy', names: tn('Nhẫn Phỉ Thúy') },
+      claw: { n: 'Nhẫn Long Trảo', names: tn('Nhẫn Long Trảo') }, crown: { n: 'Nhẫn Phượng Quan', names: tn('Nhẫn Phượng Quan') } },
   };
-  TYPES.necklace = { pendant: { n: 'Dây Ngọc Bội', names: tn('Dây Ngọc Bội') }, amulet: { n: 'Bùa Hộ Mệnh', names: tn('Bùa Hộ Mệnh') }, pearl: { n: 'Chuỗi Ngọc Trai', names: tn('Chuỗi Ngọc Trai') },
-    heart: { n: 'Mặt Dây Tâm Ngọc', names: tn('Mặt Dây Tâm Ngọc') }, fang: { n: 'Vòng Cổ Nanh Thú', names: tn('Vòng Cổ Nanh Thú') } };
-  TYPES.bracelet = { bangle: { n: 'Kim Trạc', names: tn('Kim Trạc') }, beads: { n: 'Chuỗi Hạt', names: tn('Chuỗi Hạt') }, chain: { n: 'Lắc Xích', names: tn('Lắc Xích') },
-    cuff: { n: 'Hộ Uyển', names: tn('Hộ Uyển') }, charm: { n: 'Lắc Bùa', names: tn('Lắc Bùa') } };
+  TYPES.necklace = { pendant: { n: 'Ngọc Bội', names: tn('Ngọc Bội') }, amulet: { n: 'Trường Mệnh Tỏa', names: tn('Trường Mệnh Tỏa') }, pearl: { n: 'Chuỗi Minh Châu', names: tn('Chuỗi Minh Châu') },
+    heart: { n: 'Tâm Ngọc', names: tn('Tâm Ngọc') }, fang: { n: 'Nanh Hổ', names: tn('Nanh Hổ') } };
+  TYPES.bracelet = { bangle: { n: 'Kim Trạc', names: tn('Kim Trạc') }, beads: { n: 'Tràng Hạt', names: tn('Tràng Hạt') }, chain: { n: 'Lắc Xích', names: tn('Lắc Xích') },
+    cuff: { n: 'Hộ Uyển', names: tn('Hộ Uyển') }, charm: { n: 'Lắc Chuông', names: tn('Lắc Chuông') } };
   const DEFAULT_TYPE = { weapon: 'staff', hat: 'wizard', armor: 'robe', ring: 'solitaire', necklace: 'pendant', bracelet: 'bangle' };
   // Vật phẩm hỗ trợ: 6 loại, mỗi loại có hình riêng trong assets/items và assets/use
   const SUP = {
-    heal: { n: 'Bình Hồi Phục', img: 'heal_potion', names: ['Bình Hồi Phục', 'Bình Hồi Phục Hoàng', 'Bình Hồi Phục Huyền', 'Bình Hồi Phục Địa', 'Bình Hồi Phục Thiên', 'Bình Hồi Phục Tuyệt'] },
-    shield: { n: 'Khiên Pha Lê', img: 'crystal_shield', names: ['Khiên Pha Lê', 'Khiên Pha Lê Hoàng', 'Khiên Pha Lê Huyền', 'Khiên Pha Lê Địa', 'Khiên Pha Lê Thiên', 'Khiên Pha Lê Tuyệt'] },
-    fire: { n: 'Đá Rune Lửa', img: 'fire_rune', names: ['Đá Rune Lửa', 'Rune Lửa Hoàng', 'Rune Lửa Huyền', 'Rune Lửa Địa', 'Rune Lửa Thiên', 'Rune Lửa Tuyệt'] },
-    frost: { n: 'Bom Băng Giá', img: 'frost_bomb', names: ['Bom Băng Giá', 'Bom Băng Hoàng', 'Bom Băng Huyền', 'Bom Băng Địa', 'Bom Băng Thiên', 'Bom Băng Tuyệt'] },
-    wind: { n: 'Lông Vũ Gió', img: 'wind_feather', names: ['Lông Vũ Gió', 'Lông Vũ Gió Hoàng', 'Lông Vũ Gió Huyền', 'Lông Vũ Gió Địa', 'Lông Vũ Gió Thiên', 'Lông Vũ Gió Tuyệt'] },
-    elixir: { n: 'Tiên Dược Vàng', img: 'power_elixir', names: ['Tiên Dược Vàng', 'Tiên Dược Hoàng', 'Tiên Dược Huyền', 'Tiên Dược Địa', 'Tiên Dược Thiên', 'Tiên Dược Tuyệt'] },
+    heal: { n: 'Hồi Xuân Đan', img: 'heal_potion', names: ['Hồi Xuân Đan', 'Hồi Xuân Đan Hoàng', 'Hồi Xuân Đan Huyền', 'Hồi Xuân Đan Địa', 'Hồi Xuân Đan Thiên', 'Hồi Xuân Đan Tuyệt'] },
+    shield: { n: 'Kim Chung Tráo', img: 'crystal_shield', names: ['Kim Chung Tráo', 'Kim Chung Tráo Hoàng', 'Kim Chung Tráo Huyền', 'Kim Chung Tráo Địa', 'Kim Chung Tráo Thiên', 'Kim Chung Tráo Tuyệt'] },
+    fire: { n: 'Hỏa Phù', img: 'fire_rune', names: ['Hỏa Phù', 'Hỏa Phù Hoàng', 'Hỏa Phù Huyền', 'Hỏa Phù Địa', 'Hỏa Phù Thiên', 'Hỏa Phù Tuyệt'] },
+    frost: { n: 'Hàn Băng Châu', img: 'frost_bomb', names: ['Hàn Băng Châu', 'Hàn Băng Châu Hoàng', 'Hàn Băng Châu Huyền', 'Hàn Băng Châu Địa', 'Hàn Băng Châu Thiên', 'Hàn Băng Châu Tuyệt'] },
+    wind: { n: 'Lông Hạc', img: 'wind_feather', names: ['Lông Hạc', 'Lông Hạc Hoàng', 'Lông Hạc Huyền', 'Lông Hạc Địa', 'Lông Hạc Thiên', 'Lông Hạc Tuyệt'] },
+    elixir: { n: 'Đại Hoàn Đan', img: 'power_elixir', names: ['Đại Hoàn Đan', 'Đại Hoàn Đan Hoàng', 'Đại Hoàn Đan Huyền', 'Đại Hoàn Đan Địa', 'Đại Hoàn Đan Thiên', 'Đại Hoàn Đan Tuyệt'] },
   };
   const SUP_KINDS = Object.keys(SUP);
   const SUP_MIGRATE = { scope: 'wind' };
@@ -79,13 +80,13 @@
     { n: 'Thần Long Thái Cổ', t: 5, col: '#b8293f', horn: 5, map: 'night' },
   ];
   const MAPS = [
-    { id: 'forest', n: 'Rừng Xanh' }, { id: 'desert', n: 'Sa Mạc Vàng' }, { id: 'snow', n: 'Đỉnh Tuyết' }, { id: 'volcano', n: 'Núi Lửa' },
-    { id: 'ruins', n: 'Thành Cổ' }, { id: 'sky', n: 'Đảo Trời' }, { id: 'night', n: 'Biển Đêm' }, { id: 'canyon', n: 'Hẻm Núi' },
+    { id: 'forest', n: 'Trúc Lâm' }, { id: 'desert', n: 'Đại Mạc' }, { id: 'snow', n: 'Thiên Sơn' }, { id: 'volcano', n: 'Hỏa Diệm Sơn' },
+    { id: 'ruins', n: 'Cổ Thành' }, { id: 'sky', n: 'Bồng Lai' }, { id: 'night', n: 'Đông Hải' }, { id: 'canyon', n: 'Hoa Sơn' },
   ];
   const SHOP = [
-    { id: 'box0', n: 'Rương Cơ bản', desc: '1 trang bị Cơ bản ngẫu nhiên, có thể là trang sức', price: 300, tier: 0 },
-    { id: 'box1', n: 'Rương Hoàng cấp', desc: '1 trang bị Hoàng cấp ngẫu nhiên, có thể là trang sức', price: 4000, tier: 1 },
-    { id: 'box2', n: 'Rương Huyền cấp', desc: '1 trang bị Huyền cấp ngẫu nhiên, có thể là trang sức', price: 16000, tier: 2 },
+    { id: 'box0', n: 'Bảo Rương Cơ bản', desc: '1 trang bị Cơ bản ngẫu nhiên, có thể là trang sức', price: 300, tier: 0 },
+    { id: 'box1', n: 'Bảo Rương Hoàng cấp', desc: '1 trang bị Hoàng cấp ngẫu nhiên, có thể là trang sức', price: 4000, tier: 1 },
+    { id: 'box2', n: 'Bảo Rương Huyền cấp', desc: '1 trang bị Huyền cấp ngẫu nhiên, có thể là trang sức', price: 16000, tier: 2 },
   ];
   // Tiệm vũ khí: người chơi chọn kiểu + bậc, giá cao hơn rương vì không phải ngẫu nhiên
   const WEAPON_SHOP = [{ tier: 0, price: 800 }, { tier: 1, price: 9000 }, { tier: 2, price: 32000 }];
